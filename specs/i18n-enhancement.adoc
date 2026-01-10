@@ -1,0 +1,642 @@
+= Internationalization (i18n) Enhancement
+:toc: left
+:toclevels: 3
+:sectnums:
+:version: 1.0.0
+:date: {docdate}
+:author: Patrick Cheung
+
+== Document Information
+
+[cols="1,3"]
+|===
+|Version |{version}
+|Date |{date}
+|Author |{author}
+|Status |Draft
+|===
+
+== 1. Overview
+
+This enhancement adds comprehensive internationalization (i18n) and localization (l10n) support to the Local Prompt Agent, enabling users to interact with the system in their preferred language.
+
+=== 1.1 Supported Languages
+
+*Initial Release Languages:*
+
+1. **English (en)** - Default language
+2. **Traditional Chinese (zh-TW)** - 繁體中文
+3. **Simplified Chinese (zh-CN)** - 简体中文
+
+*Future Consideration:*
+- Spanish (es)
+- Japanese (ja)
+- Korean (ko)
+- German (de)
+- French (fr)
+
+=== 1.2 Scope
+
+The i18n support covers:
+
+* CLI interface messages and prompts
+* API error messages and responses
+* Configuration file comments and documentation
+* System logs (optional, structured logging)
+* Help text and documentation
+* Web UI (if implemented)
+
+== 2. Functional Requirements
+
+=== FR-i18n-1: Language Selection
+
+==== FR-i18n-1.1: Configuration
+Users can set their preferred language through:
+
+1. **Configuration file**:
+```yaml
+system:
+  language: "zh-TW"  # or "en", "zh-CN"
+  fallback_language: "en"
+```
+
+2. **Environment variable**:
+```bash
+export LOCAL_PROMPT_AGENT_LANG=zh-TW
+```
+
+3. **CLI flag**:
+```bash
+local-prompt-agent --lang zh-TW chat "你好"
+```
+
+4. **Runtime switching** (for interactive sessions):
+```
+> /lang zh-TW
+Language switched to Traditional Chinese (繁體中文)
+```
+
+==== FR-i18n-1.2: Auto-Detection
+System can auto-detect language from:
+- System locale (`LANG` environment variable)
+- User's first message language
+- Configuration file setting
+
+=== FR-i18n-2: Translation Coverage
+
+==== FR-i18n-2.1: CLI Messages
+All CLI output translated:
+- Welcome messages
+- Prompts and questions
+- Status messages
+- Progress indicators
+- Completion messages
+
+**Example (English)**:
+```
+✓ Agent initialized successfully
+→ Waiting for your input...
+⚠ Warning: High memory usage detected
+✗ Error: Connection to backend failed
+```
+
+**Example (Traditional Chinese)**:
+```
+✓ 代理已成功初始化
+→ 等待您的輸入...
+⚠ 警告：偵測到高記憶體使用量
+✗ 錯誤：無法連接到後端
+```
+
+**Example (Simplified Chinese)**:
+```
+✓ 代理已成功初始化
+→ 等待您的输入...
+⚠ 警告：检测到高内存使用量
+✗ 错误：无法连接到后端
+```
+
+==== FR-i18n-2.2: Error Messages
+All error messages with context:
+
+```python
+# English
+"File not found: {filename}"
+"Invalid configuration: {field} must be a valid {type}"
+
+# Traditional Chinese
+"找不到檔案：{filename}"
+"配置無效：{field} 必須是有效的 {type}"
+
+# Simplified Chinese
+"找不到文件：{filename}"
+"配置无效：{field} 必须是有效的 {type}"
+```
+
+==== FR-i18n-2.3: Help Text
+```bash
+# English
+$ local-prompt-agent --help
+Usage: local-prompt-agent [OPTIONS] COMMAND [ARGS]...
+
+  Local AI prompt agent with multi-model support
+
+Options:
+  --version          Show version and exit
+  --lang TEXT        Interface language (en, zh-TW, zh-CN)
+  --help             Show this message and exit
+
+Commands:
+  chat      Start interactive chat session
+  serve     Start API server
+  config    Manage configuration
+
+# Traditional Chinese
+$ local-prompt-agent --help --lang zh-TW
+使用方式：local-prompt-agent [選項] 命令 [參數]...
+
+  支援多模型的本地 AI 提示代理
+
+選項：
+  --version          顯示版本並退出
+  --lang 文字         介面語言（en、zh-TW、zh-CN）
+  --help             顯示此訊息並退出
+
+命令：
+  chat      開始互動式對話
+  serve     啟動 API 伺服器
+  config    管理配置
+```
+
+=== FR-i18n-3: API Responses
+
+REST API responses include language support:
+
+```json
+{
+  "success": true,
+  "message": "操作成功完成",
+  "data": { ... },
+  "lang": "zh-TW"
+}
+
+{
+  "success": false,
+  "error": {
+    "code": "BACKEND_CONNECTION_FAILED",
+    "message": "無法連接到 LLM 後端",
+    "message_en": "Failed to connect to LLM backend",
+    "details": { ... }
+  },
+  "lang": "zh-TW"
+}
+```
+
+**Language negotiation**:
+- Accept-Language header
+- Query parameter: `?lang=zh-TW`
+- Configuration setting
+
+=== FR-i18n-4: Locale-Specific Formatting
+
+==== FR-i18n-4.1: Date and Time
+```python
+# English
+"Last modified: January 10, 2026 at 3:45 PM"
+
+# Traditional Chinese
+"最後修改：2026年1月10日 下午3:45"
+
+# Simplified Chinese
+"最后修改：2026年1月10日 下午3:45"
+```
+
+==== FR-i18n-4.2: Numbers and Units
+```python
+# English
+"Size: 1,234,567 bytes (1.23 MB)"
+"Duration: 1.5 seconds"
+
+# Traditional Chinese
+"大小：1,234,567 位元組（1.23 MB）"
+"持續時間：1.5 秒"
+
+# Simplified Chinese
+"大小：1,234,567 字节（1.23 MB）"
+"持续时间：1.5 秒"
+```
+
+== 3. Implementation Approach
+
+=== 3.1 Technology Stack
+
+**Python i18n Libraries**:
+1. **gettext** (built-in) - Standard Python i18n
+2. **Babel** - Modern i18n/l10n toolkit
+3. **fluent-runtime** - Project Fluent (recommended)
+
+**Recommended: Babel + gettext**
+
+=== 3.2 Directory Structure
+
+```
+src/local_prompt_agent/
+├── i18n/
+│   ├── __init__.py
+│   ├── translations.py        # Translation manager
+│   ├── locales/
+│   │   ├── en/
+│   │   │   └── LC_MESSAGES/
+│   │   │       ├── messages.po
+│   │   │       └── messages.mo
+│   │   ├── zh_TW/
+│   │   │   └── LC_MESSAGES/
+│   │   │       ├── messages.po
+│   │   │       └── messages.mo
+│   │   └── zh_CN/
+│   │       └── LC_MESSAGES/
+│   │           ├── messages.po
+│   │           └── messages.mo
+│   └── formatters.py          # Locale-specific formatting
+```
+
+=== 3.3 Translation Workflow
+
+1. **Extract messages**:
+```bash
+pybabel extract -o messages.pot src/
+```
+
+2. **Create/update translations**:
+```bash
+pybabel init -i messages.pot -d src/local_prompt_agent/i18n/locales -l zh_TW
+pybabel update -i messages.pot -d src/local_prompt_agent/i18n/locales
+```
+
+3. **Compile translations**:
+```bash
+pybabel compile -d src/local_prompt_agent/i18n/locales
+```
+
+=== 3.4 Code Implementation
+
+==== 3.4.1: Translation Manager
+
+```python
+# src/local_prompt_agent/i18n/translations.py
+import gettext
+from pathlib import Path
+from typing import Optional
+import locale
+
+class TranslationManager:
+    """Manage translations and localization"""
+    
+    SUPPORTED_LANGUAGES = {
+        "en": "English",
+        "zh-TW": "繁體中文",
+        "zh-CN": "简体中文"
+    }
+    
+    def __init__(self, language: Optional[str] = None):
+        self.locale_dir = Path(__file__).parent / "locales"
+        self.language = language or self._detect_language()
+        self._translator = self._load_translator()
+    
+    def _detect_language(self) -> str:
+        """Auto-detect system language"""
+        try:
+            system_locale = locale.getdefaultlocale()[0]
+            if system_locale:
+                # Convert locale codes
+                if system_locale.startswith("zh_TW"):
+                    return "zh-TW"
+                elif system_locale.startswith("zh_CN"):
+                    return "zh-CN"
+                elif system_locale.startswith("en"):
+                    return "en"
+        except:
+            pass
+        return "en"  # Default fallback
+    
+    def _load_translator(self):
+        """Load gettext translator"""
+        try:
+            # Convert zh-TW to zh_TW for gettext
+            locale_code = self.language.replace("-", "_")
+            return gettext.translation(
+                "messages",
+                localedir=self.locale_dir,
+                languages=[locale_code],
+                fallback=True
+            )
+        except Exception:
+            # Fallback to English
+            return gettext.NullTranslations()
+    
+    def translate(self, message: str, **kwargs) -> str:
+        """Translate message with optional formatting"""
+        translated = self._translator.gettext(message)
+        if kwargs:
+            return translated.format(**kwargs)
+        return translated
+    
+    def ngettext(self, singular: str, plural: str, n: int) -> str:
+        """Handle plural forms"""
+        return self._translator.ngettext(singular, plural, n)
+    
+    def switch_language(self, language: str):
+        """Switch to different language"""
+        if language in self.SUPPORTED_LANGUAGES:
+            self.language = language
+            self._translator = self._load_translator()
+
+# Global translator instance
+_translator: Optional[TranslationManager] = None
+
+def init_i18n(language: Optional[str] = None):
+    """Initialize i18n system"""
+    global _translator
+    _translator = TranslationManager(language)
+
+def _(message: str, **kwargs) -> str:
+    """Shorthand translation function"""
+    if _translator is None:
+        init_i18n()
+    return _translator.translate(message, **kwargs)
+
+def ngettext(singular: str, plural: str, n: int) -> str:
+    """Plural translation"""
+    if _translator is None:
+        init_i18n()
+    return _translator.ngettext(singular, plural, n)
+```
+
+==== 3.4.2: Usage in Code
+
+```python
+from local_prompt_agent.i18n import _, ngettext, init_i18n
+
+# Initialize with user's language
+init_i18n("zh-TW")
+
+# Simple translation
+print(_("Agent initialized successfully"))
+
+# With variables
+print(_("File not found: {filename}", filename="config.yaml"))
+
+# Plural forms
+count = 5
+print(ngettext(
+    "{n} file processed",
+    "{n} files processed",
+    count
+).format(n=count))
+
+# Error messages
+raise ValueError(_("Invalid configuration: {field} must be a valid {type}",
+                   field="model", type="string"))
+```
+
+==== 3.4.3: CLI Integration
+
+```python
+import click
+from local_prompt_agent.i18n import _, init_i18n
+
+@click.group()
+@click.option('--lang', type=click.Choice(['en', 'zh-TW', 'zh-CN']),
+              help=_('Interface language'))
+def cli(lang):
+    """Local AI prompt agent"""
+    if lang:
+        init_i18n(lang)
+
+@cli.command()
+def chat():
+    """Start interactive chat"""
+    click.echo(_("Starting chat session..."))
+    click.echo(_("Type '/exit' to quit"))
+```
+
+==== 3.4.4: API Integration
+
+```python
+from fastapi import FastAPI, Header
+from local_prompt_agent.i18n import init_i18n, _
+
+app = FastAPI()
+
+def get_language(accept_language: str = Header(None)) -> str:
+    """Extract language from Accept-Language header"""
+    if accept_language:
+        # Parse Accept-Language header
+        languages = accept_language.split(",")
+        if languages:
+            lang = languages[0].split(";")[0].strip()
+            return lang
+    return "en"
+
+@app.post("/api/execute")
+async def execute_prompt(
+    request: PromptRequest,
+    accept_language: str = Header(None)
+):
+    lang = get_language(accept_language)
+    init_i18n(lang)
+    
+    try:
+        result = await agent.execute(request.prompt)
+        return {
+            "success": True,
+            "message": _("Operation completed successfully"),
+            "data": result,
+            "lang": lang
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": {
+                "message": _("Operation failed: {error}", error=str(e)),
+                "message_en": str(e)  # Always include English
+            },
+            "lang": lang
+        }
+```
+
+=== 3.5 Translation Files
+
+==== 3.5.1: English (Base) - messages.po
+
+```po
+# English translations
+msgid ""
+msgstr ""
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Agent initialized successfully"
+msgstr "Agent initialized successfully"
+
+msgid "File not found: {filename}"
+msgstr "File not found: {filename}"
+
+msgid "Starting chat session..."
+msgstr "Starting chat session..."
+```
+
+==== 3.5.2: Traditional Chinese - zh_TW/messages.po
+
+```po
+# Traditional Chinese translations
+msgid ""
+msgstr ""
+"Language: zh-TW\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Agent initialized successfully"
+msgstr "代理已成功初始化"
+
+msgid "File not found: {filename}"
+msgstr "找不到檔案：{filename}"
+
+msgid "Starting chat session..."
+msgstr "正在啟動對話..."
+```
+
+==== 3.5.3: Simplified Chinese - zh_CN/messages.po
+
+```po
+# Simplified Chinese translations
+msgid ""
+msgstr ""
+"Language: zh-CN\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Agent initialized successfully"
+msgstr "代理已成功初始化"
+
+msgid "File not found: {filename}"
+msgstr "找不到文件：{filename}"
+
+msgid "Starting chat session..."
+msgstr "正在启动对话..."
+```
+
+== 4. Testing Requirements
+
+=== 4.1 Unit Tests
+
+```python
+def test_translation_manager():
+    """Test translation manager"""
+    tm = TranslationManager("zh-TW")
+    assert tm.translate("Hello") == "您好"
+    
+def test_language_detection():
+    """Test auto language detection"""
+    tm = TranslationManager()
+    assert tm.language in ["en", "zh-TW", "zh-CN"]
+
+def test_language_switching():
+    """Test runtime language switching"""
+    init_i18n("en")
+    assert _("Hello") == "Hello"
+    
+    init_i18n("zh-TW")
+    assert _("Hello") == "您好"
+```
+
+=== 4.2 Integration Tests
+
+```python
+async def test_cli_language():
+    """Test CLI with different languages"""
+    result = await run_cli("--lang zh-TW chat")
+    assert "正在啟動對話" in result.output
+
+async def test_api_language():
+    """Test API language negotiation"""
+    response = await client.post(
+        "/api/execute",
+        headers={"Accept-Language": "zh-TW"}
+    )
+    assert response.json()["lang"] == "zh-TW"
+```
+
+== 5. Configuration
+
+```yaml
+# config.yaml
+system:
+  # Interface language
+  language: "zh-TW"  # en, zh-TW, zh-CN
+  
+  # Fallback if translation missing
+  fallback_language: "en"
+  
+  # Auto-detect from system
+  auto_detect_language: true
+  
+  # Date/time format
+  locale_formatting: true
+  
+  # Always include English in API errors
+  include_english_errors: true
+```
+
+== 6. Dependencies
+
+```toml
+# pyproject.toml
+[tool.poetry.dependencies]
+python = "^3.11"
+babel = "^2.13.0"         # i18n toolkit
+python-dateutil = "^2.8.2" # Date formatting
+```
+
+== 7. Implementation Priority
+
+=== Phase 1: Core (Week 1)
+1. Set up Babel and directory structure
+2. Implement TranslationManager
+3. Add English base translations
+4. CLI integration
+
+=== Phase 2: Translations (Week 2)
+1. Create Traditional Chinese translations
+2. Create Simplified Chinese translations
+3. Add locale-specific formatting
+4. Test language detection
+
+=== Phase 3: API & Advanced (Week 3)
+1. API language negotiation
+2. Runtime language switching
+3. Help text translation
+4. Documentation translation
+
+== 8. Future Enhancements
+
+1. **Additional Languages**: Add more languages based on user demand
+2. **User Contributions**: Community translation platform
+3. **Context-Aware Translation**: Different translations based on context
+4. **Voice Recognition i18n**: Multi-language voice input
+5. **Web UI Translation**: Full web interface i18n support
+
+== 9. Success Criteria
+
+✓ Users can select their preferred language  
+✓ All CLI messages translated  
+✓ API responses include appropriate language  
+✓ Error messages clear in all languages  
+✓ Help text fully translated  
+✓ Auto-detection works correctly  
+✓ Runtime switching works smoothly  
+✓ Traditional and Simplified Chinese properly distinguished  
+
+---
+
+**Note**: This enhancement maintains Rule #1: Keep it simple. The i18n system uses standard Python tools (gettext/Babel) and doesn't overcomplicate the codebase.
