@@ -618,7 +618,543 @@ python-dateutil = "^2.8.2" # Date formatting
 3. Help text translation
 4. Documentation translation
 
-== 8. Future Enhancements
+== 8. Character Encoding - Critical for Web UI
+
+=== 8.1 Overview
+
+⚠️ **CRITICAL**: Proper character encoding is essential for displaying Chinese characters correctly. Incorrect encoding causes "�" (replacement characters) or garbled text (乱码/亂碼).
+
+**Rule**: **Use UTF-8 everywhere** - consistently across all layers.
+
+=== 8.2 Encoding Layers
+
+==== Layer 1: Python Source Files
+
+```python
+# -*- coding: utf-8 -*-
+"""
+Module docstring with Chinese: 本地提示代理
+All Python files MUST have UTF-8 encoding
+"""
+```
+
+**Modern Python 3.11+**: UTF-8 is default, but declare explicitly for clarity.
+
+==== Layer 2: Database
+
+```python
+# SQLAlchemy with UTF-8
+from sqlalchemy import create_engine
+
+# SQLite
+engine = create_engine(
+    'sqlite:///agent.db',
+    connect_args={'check_same_thread': False},
+    # SQLite uses UTF-8 by default
+)
+
+# PostgreSQL
+engine = create_engine(
+    'postgresql://user:pass@localhost/agentdb',
+    client_encoding='utf8'
+)
+
+# MySQL/MariaDB
+engine = create_engine(
+    'mysql+pymysql://user:pass@localhost/agentdb',
+    connect_args={'charset': 'utf8mb4'}  # utf8mb4 for full Unicode
+)
+```
+
+**Important**: MySQL's `utf8` is limited (3 bytes). Use `utf8mb4` (4 bytes) for full Unicode support including emojis.
+
+==== Layer 3: FastAPI / Web Framework
+
+```python
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse, HTMLResponse
+import json
+
+app = FastAPI()
+
+# JSON responses automatically UTF-8
+@app.get("/api/message")
+async def get_message():
+    return {
+        "message": "你好世界",  # Automatically encoded as UTF-8
+        "language": "zh-TW"
+    }
+
+# Ensure UTF-8 for custom responses
+@app.get("/api/custom")
+async def custom_response():
+    content = {"message": "繁體中文"}
+    return JSONResponse(
+        content=content,
+        media_type="application/json; charset=utf-8"
+    )
+
+# HTML responses with UTF-8 meta tag
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    return """
+    <!DOCTYPE html>
+    <html lang="zh-TW">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>本地提示代理</title>
+    </head>
+    <body>
+        <h1>歡迎使用本地提示代理</h1>
+        <p>支援繁體中文、简体中文和English</p>
+    </body>
+    </html>
+    """
+```
+
+==== Layer 4: HTTP Headers
+
+```python
+from fastapi import Response
+
+@app.middleware("http")
+async def add_charset_middleware(request, call_next):
+    """Ensure UTF-8 in all responses"""
+    response = await call_next(request)
+    
+    # Add charset to Content-Type if not present
+    content_type = response.headers.get("content-type", "")
+    if content_type and "charset" not in content_type.lower():
+        if "application/json" in content_type:
+            response.headers["content-type"] = "application/json; charset=utf-8"
+        elif "text/html" in content_type:
+            response.headers["content-type"] = "text/html; charset=utf-8"
+    
+    return response
+```
+
+**Critical Headers**:
+```
+Content-Type: application/json; charset=utf-8
+Content-Type: text/html; charset=utf-8
+```
+
+==== Layer 5: HTML Meta Tags
+
+```html
+<!DOCTYPE html>
+<html lang="zh-TW">  <!-- Specify language -->
+<head>
+    <!-- CRITICAL: UTF-8 meta tag FIRST -->
+    <meta charset="UTF-8">
+    
+    <!-- Backup declaration -->
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <!-- Viewport for mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>本地提示代理</title>
+</head>
+<body>
+    <!-- Chinese content displays correctly -->
+    <h1>歡迎使用 Welcome 欢迎使用</h1>
+</body>
+</html>
+```
+
+==== Layer 6: File I/O
+
+```python
+# Reading files
+with open('config.yaml', 'r', encoding='utf-8') as f:
+    config = f.read()
+
+# Writing files
+with open('output.txt', 'w', encoding='utf-8') as f:
+    f.write("繁體中文\n简体中文\nEnglish\n")
+
+# JSON files
+import json
+
+# Save with UTF-8
+with open('data.json', 'w', encoding='utf-8', ensure_ascii=False) as f:
+    json.dump({"message": "你好"}, f, ensure_ascii=False, indent=2)
+
+# Load with UTF-8
+with open('data.json', 'r', encoding='utf-8') as f:
+    data = json.load(f)
+```
+
+**Important**: Use `ensure_ascii=False` in `json.dump()` to keep Chinese characters readable.
+
+==== Layer 7: Web Sockets
+
+```python
+from fastapi import WebSocket
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    
+    # Text messages are UTF-8 by default
+    await websocket.send_text("你好世界")
+    
+    # Receive and decode
+    message = await websocket.receive_text()
+    # Already decoded as UTF-8
+```
+
+=== 8.3 Frontend Web UI Encoding
+
+==== 8.3.1: HTML Template
+
+```html
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>本地提示代理 - Local Prompt Agent</title>
+    
+    <!-- Font that supports Chinese characters -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 
+                         "Segoe UI", "Noto Sans CJK TC", "Noto Sans CJK SC",
+                         "Microsoft YaHei", "PingFang SC", "Heiti TC", 
+                         sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>歡迎 / 欢迎 / Welcome</h1>
+        <input type="text" placeholder="輸入訊息..." id="message">
+        <button onclick="send()">傳送 Send</button>
+        <div id="response"></div>
+    </div>
+    
+    <script>
+        async function send() {
+            const message = document.getElementById('message').value;
+            
+            // Fetch with UTF-8
+            const response = await fetch('/api/execute', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'Accept': 'application/json',
+                    'Accept-Language': 'zh-TW'
+                },
+                body: JSON.stringify({
+                    prompt: message  // JavaScript strings are UTF-16, sent as UTF-8
+                })
+            });
+            
+            // Parse JSON (automatically UTF-8)
+            const data = await response.json();
+            
+            // Display (browser handles encoding)
+            document.getElementById('response').textContent = data.message;
+        }
+    </script>
+</body>
+</html>
+```
+
+==== 8.3.2: React/Vue Components
+
+```jsx
+// React component with Chinese
+import React, { useState } from 'react';
+
+function ChatInterface() {
+    const [message, setMessage] = useState('');
+    const [response, setResponse] = useState('');
+    
+    const sendMessage = async () => {
+        // Fetch automatically handles UTF-8
+        const res = await fetch('/api/execute', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Accept-Language': localStorage.getItem('language') || 'zh-TW'
+            },
+            body: JSON.stringify({ prompt: message })
+        });
+        
+        const data = await res.json();
+        setResponse(data.message);
+    };
+    
+    return (
+        <div>
+            <h1>本地提示代理</h1>
+            <input 
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="輸入訊息..."
+            />
+            <button onClick={sendMessage}>傳送</button>
+            <div>{response}</div>
+        </div>
+    );
+}
+```
+
+=== 8.4 Common Encoding Issues and Solutions
+
+==== Issue 1: Garbled Chinese Characters (乱码/亂碼)
+
+**Problem**:
+```
+你好 → ä½ å¥½
+繁體中文 → ç¹é«ä¸­æ
+```
+
+**Causes**:
+1. Missing UTF-8 declaration
+2. File saved in wrong encoding
+3. Database not using UTF-8
+4. Missing charset in HTTP headers
+
+**Solutions**:
+```python
+# ✅ Correct: Specify UTF-8 everywhere
+response = JSONResponse(
+    content={"message": "你好"},
+    media_type="application/json; charset=utf-8"
+)
+
+# ✅ Correct: Database with UTF-8
+engine = create_engine(
+    'mysql://localhost/db',
+    connect_args={'charset': 'utf8mb4'}
+)
+
+# ✅ Correct: File operations
+with open('file.txt', 'r', encoding='utf-8') as f:
+    content = f.read()
+```
+
+==== Issue 2: Replacement Characters (�)
+
+**Problem**:
+```
+你好 → ��
+```
+
+**Cause**: Data encoded in one charset, decoded in another.
+
+**Solution**: Consistent UTF-8 encoding throughout the pipeline.
+
+==== Issue 3: JSON Escape Sequences
+
+**Problem**:
+```json
+{
+  "message": "\u4f60\u597d"
+}
+```
+
+**Solution**:
+```python
+# ✅ Keep Chinese readable in JSON
+import json
+
+data = {"message": "你好"}
+json_str = json.dumps(data, ensure_ascii=False)
+# Result: {"message": "你好"}
+```
+
+==== Issue 4: URL Encoding
+
+**Problem**: Chinese in URLs breaks links.
+
+**Solution**:
+```python
+from urllib.parse import quote, unquote
+
+# Encode Chinese for URLs
+chinese_text = "繁體中文"
+encoded = quote(chinese_text, safe='')  # %E7%B9%81%E9%AB%94%E4%B8%AD%E6%96%87
+
+# Decode
+decoded = unquote(encoded)  # 繁體中文
+```
+
+```javascript
+// JavaScript
+const chinese = "繁體中文";
+const encoded = encodeURIComponent(chinese);
+const decoded = decodeURIComponent(encoded);
+```
+
+=== 8.5 Testing Encoding
+
+==== Test Cases
+
+```python
+# Test 1: Round-trip encoding
+def test_encoding_roundtrip():
+    """Test Chinese characters survive round-trip"""
+    original = "繁體中文 简体中文 English"
+    
+    # Save to file
+    with open('test.txt', 'w', encoding='utf-8') as f:
+        f.write(original)
+    
+    # Read back
+    with open('test.txt', 'r', encoding='utf-8') as f:
+        retrieved = f.read()
+    
+    assert original == retrieved
+
+# Test 2: JSON encoding
+def test_json_encoding():
+    """Test JSON preserves Chinese"""
+    data = {"message": "你好世界"}
+    
+    # Serialize
+    json_str = json.dumps(data, ensure_ascii=False)
+    assert "你好世界" in json_str
+    
+    # Deserialize
+    parsed = json.loads(json_str)
+    assert parsed["message"] == "你好世界"
+
+# Test 3: Database encoding
+async def test_database_encoding():
+    """Test database stores/retrieves Chinese correctly"""
+    original = "繁體中文測試"
+    
+    # Save to database
+    conversation = Conversation(message=original)
+    session.add(conversation)
+    await session.commit()
+    
+    # Retrieve
+    retrieved = await session.get(Conversation, conversation.id)
+    assert retrieved.message == original
+
+# Test 4: API encoding
+async def test_api_encoding():
+    """Test API handles Chinese correctly"""
+    response = await client.post(
+        "/api/execute",
+        json={"prompt": "你好世界"},
+        headers={"Accept-Language": "zh-TW"}
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    # Should contain Chinese without garbling
+    assert "�" not in json.dumps(data)
+```
+
+==== Browser Testing
+
+Test in multiple browsers:
+- Chrome/Edge (Chromium)
+- Firefox
+- Safari
+- Mobile browsers (iOS Safari, Chrome Android)
+
+**Test checklist**:
+```
+□ Chinese displays correctly in UI
+□ Chinese input works in text fields
+□ Chinese in URLs works
+□ Copy-paste Chinese works
+□ Chinese in console.log() readable
+□ Chinese in error messages clear
+□ Mixed language text displays correctly
+```
+
+=== 8.6 Configuration Best Practices
+
+```yaml
+# config.yaml (saved as UTF-8)
+system:
+  # Encoding settings
+  encoding:
+    default: "utf-8"
+    file_io: "utf-8"
+    database: "utf8mb4"  # For MySQL
+    api_response: "utf-8"
+  
+  # Language settings
+  language: "zh-TW"
+  
+  # Font settings for UI
+  fonts:
+    chinese: "Noto Sans CJK TC, Microsoft YaHei"
+    fallback: "sans-serif"
+```
+
+=== 8.7 Deployment Checklist
+
+**Before deploying**:
+
+```bash
+# 1. Check all files are UTF-8
+find . -name "*.py" -exec file {} \; | grep -v "UTF-8"
+
+# 2. Check HTML files
+find . -name "*.html" -exec grep -L "charset=UTF-8" {} \;
+
+# 3. Check Python files have encoding declaration
+grep -L "coding: utf-8" src/**/*.py
+
+# 4. Test with real Chinese input
+curl -X POST http://localhost:8000/api/execute \
+  -H "Content-Type: application/json; charset=utf-8" \
+  -d '{"prompt": "測試繁體中文"}'
+
+# 5. Check response encoding
+curl -I http://localhost:8000/ | grep -i "charset"
+```
+
+**Deployment settings**:
+
+```bash
+# Environment variables
+export LANG=zh_TW.UTF-8
+export LC_ALL=zh_TW.UTF-8
+export PYTHONIOENCODING=utf-8
+
+# Nginx configuration
+location / {
+    charset utf-8;
+    charset_types text/html text/xml text/plain application/json;
+}
+
+# Apache configuration
+AddDefaultCharset UTF-8
+```
+
+=== 8.8 Summary: UTF-8 Everywhere
+
+✅ **Checklist**:
+```
+□ Python source files: UTF-8 (with declaration)
+□ Database: UTF-8/utf8mb4
+□ API responses: charset=utf-8 in headers
+□ HTML: <meta charset="UTF-8">
+□ File I/O: encoding='utf-8'
+□ JSON: ensure_ascii=False
+□ HTTP headers: Content-Type includes charset
+□ Environment: LANG=*.UTF-8
+□ Web server: charset utf-8
+□ Frontend: UTF-8 meta tags
+□ Testing: All encoding tests pass
+```
+
+**Golden Rule**: When in doubt, specify UTF-8 explicitly! 🎯
+
+== 9. Future Enhancements
 
 1. **Additional Languages**: Add more languages based on user demand
 2. **User Contributions**: Community translation platform
@@ -626,8 +1162,9 @@ python-dateutil = "^2.8.2" # Date formatting
 4. **Voice Recognition i18n**: Multi-language voice input
 5. **Web UI Translation**: Full web interface i18n support
 
-== 9. Success Criteria
+== 10. Success Criteria
 
+=== Functionality
 ✓ Users can select their preferred language  
 ✓ All CLI messages translated  
 ✓ API responses include appropriate language  
@@ -637,6 +1174,18 @@ python-dateutil = "^2.8.2" # Date formatting
 ✓ Runtime switching works smoothly  
 ✓ Traditional and Simplified Chinese properly distinguished  
 
+=== Encoding (Critical for Web UI)
+✓ No garbled Chinese characters (乱码/亂碼)  
+✓ No replacement characters (�) in output  
+✓ Chinese displays correctly in all browsers  
+✓ Chinese input works in web forms  
+✓ Database correctly stores/retrieves Chinese  
+✓ JSON responses preserve Chinese readability  
+✓ File I/O handles Chinese without errors  
+✓ UTF-8 specified in all HTTP headers  
+✓ HTML has proper charset meta tags  
+✓ All encoding tests pass  
+
 ---
 
-**Note**: This enhancement maintains Rule #1: Keep it simple. The i18n system uses standard Python tools (gettext/Babel) and doesn't overcomplicate the codebase.
+**Note**: This enhancement maintains Rule #1: Keep it simple. The i18n system uses standard Python tools (gettext/Babel) and UTF-8 consistently throughout. No complicated encoding conversions needed.
