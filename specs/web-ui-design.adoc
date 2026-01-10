@@ -1,0 +1,1472 @@
+= Web UI Design - Modern AI Chat Interface
+:toc: left
+:toclevels: 3
+:sectnums:
+:version: 1.0.0
+:date: {docdate}
+:author: Patrick Cheung
+
+== Document Information
+
+[cols="1,3"]
+|===
+|Version |{version}
+|Date |{date}
+|Author |{author}
+|Status |Draft
+|===
+
+== 1. Overview
+
+=== 1.1 Purpose
+
+Design a **modern, competitive web UI** for the Local Prompt Agent, inspired by the latest interfaces from leading AI chat platforms:
+
+* **ChatGPT** (OpenAI) - Clean, conversation-focused
+* **Claude** (Anthropic) - Minimalist, professional
+* **Gemini** (Google) - Modern, material design
+* **Copilot** (Microsoft) - Integrated, familiar
+* **Perplexity** - Search-focused, citation-rich
+
+=== 1.2 Design Principles
+
+Following **Rule #1: Keep It Simple**:
+
+1. **Clean & Minimal** - Remove clutter, focus on conversation
+2. **Fast & Responsive** - Instant feedback, smooth animations
+3. **Accessible** - WCAG 2.1 AA compliant, keyboard navigation
+4. **Mobile-First** - Works perfectly on all screen sizes
+5. **Professional** - Trust-inspiring, polished appearance
+6. **Multi-Language Ready** - Supports English, 繁體中文, 简体中文
+
+== 2. Modern UI Patterns from Competitors
+
+=== 2.1 ChatGPT-Style Interface
+
+**Key Features**:
+```
+┌─────────────────────────────────────────────────┐
+│  [☰] Local Prompt Agent            [⚙️] [👤]  │
+├─────────────────────────────────────────────────┤
+│                                                  │
+│  💬 User: How does RAG work?                   │
+│                                                  │
+│  🤖 Assistant:                                  │
+│  RAG (Retrieval-Augmented Generation) is...    │
+│                                                  │
+│  [Sources] [Copy] [Regenerate] [👍] [👎]       │
+│                                                  │
+├─────────────────────────────────────────────────┤
+│  Type a message... [📎] [🎤]            [Send]  │
+└─────────────────────────────────────────────────┘
+```
+
+**Elements**:
+- Clean white/dark background
+- Conversation bubbles with alternating colors
+- Inline actions (copy, regenerate, feedback)
+- Fixed input at bottom
+- Sidebar for conversation history
+- Model selector
+
+=== 2.2 Claude-Style Interface
+
+**Key Features**:
+```
+┌──────────┬──────────────────────────────────────┐
+│ Chats    │  New conversation    [Claude 3 ▼]   │
+│          ├──────────────────────────────────────┤
+│ ➕ New  │                                       │
+│          │  👤 How can I help you today?       │
+│ Today    │                                       │
+│ • Chat 1 │  [Suggested prompts as cards]        │
+│ • Chat 2 │  ┌────────────────┐ ┌─────────────┐ │
+│          │  │ Write code     │ │ Explain     │ │
+│ This Week│  └────────────────┘ └─────────────┘ │
+│ • Chat 3 │                                       │
+│          │                                       │
+│ Settings │  Type your message...        [Send]  │
+└──────────┴──────────────────────────────────────┘
+```
+
+**Elements**:
+- Persistent sidebar with chat history
+- Suggested prompts (cards)
+- Minimalist typography
+- Model selection prominent
+- Organized by time period
+
+=== 2.3 Gemini-Style Interface
+
+**Key Features**:
+```
+┌─────────────────────────────────────────────────┐
+│  Gemini              [Try Gemini Advanced ▼]   │
+├─────────────────────────────────────────────────┤
+│                                                  │
+│  Hello, Patrick                                  │
+│  How can I help you today?                      │
+│                                                  │
+│  [Card: Images] [Card: Code] [Card: Research]  │
+│                                                  │
+│  Recent conversations                           │
+│  • Yesterday: How does...                       │
+│  • Last week: Explain...                        │
+│                                                  │
+├─────────────────────────────────────────────────┤
+│  🔍 Enter a prompt here           [🎤] [📷]    │
+└─────────────────────────────────────────────────┘
+```
+
+**Elements**:
+- Material Design 3
+- Colorful accent cards
+- Recent conversations as list
+- Multi-modal input (text, voice, image)
+- Personalized greeting
+
+=== 2.4 Modern Best Practices Summary
+
+**From All Competitors**:
+
+1. **Fixed Bottom Input** - Always accessible
+2. **Sidebar for History** - Organized conversations
+3. **Streaming Responses** - Real-time text generation
+4. **Action Buttons** - Copy, regenerate, feedback
+5. **Model Selection** - Prominent, easy to switch
+6. **Dark Mode** - User preference toggle
+7. **Code Highlighting** - Syntax highlighting with copy button
+8. **Markdown Support** - Rich formatting
+9. **Mobile Responsive** - Hamburger menu, adapted layout
+10. **Keyboard Shortcuts** - Power user features
+
+== 3. Proposed Web UI Design
+
+=== 3.1 Layout Structure
+
+==== Desktop Layout (≥1024px)
+
+```
+┌────────────────────────────────────────────────────────┐
+│  [☰] Local Prompt Agent     [zh-TW ▼] [🌓] [⚙️] [👤] │ Header
+├───────────┬────────────────────────────────────────────┤
+│           │                                             │
+│ Sidebar   │         Main Chat Area                     │
+│ (240px)   │         (Flexible)                         │
+│           │                                             │
+│ ➕ New    │  [Agent: Default ▼]  [Model: Ollama ▼]   │
+│           │                                             │
+│ Today     │  💬 User message                           │
+│ • Chat 1  │  🤖 Assistant response with streaming...  │
+│ • Chat 2  │     [Copy] [Regen] [👍] [👎]              │
+│           │                                             │
+│ Yesterday │  💬 User message                           │
+│ • Chat 3  │  🤖 Assistant response                     │
+│           │                                             │
+│ Settings  │  Type your message...    [📎] [🎤] [Send] │ Input
+└───────────┴────────────────────────────────────────────┘
+```
+
+==== Mobile Layout (<768px)
+
+```
+┌──────────────────────────┐
+│ [☰] Local Prompt Agent  │ Header
+├──────────────────────────┤
+│                          │
+│ 💬 User message         │
+│                          │
+│ 🤖 Assistant response   │
+│                          │
+│ 💬 User message         │
+│                          │
+├──────────────────────────┤
+│ Type message... [Send]  │ Input (Fixed)
+└──────────────────────────┘
+```
+
+**Mobile Sidebar** (Slide-in from left):
+```
+┌────────────────┐
+│ ← Conversations │
+├────────────────┤
+│ ➕ New Chat    │
+│                │
+│ Today          │
+│ • Chat 1       │
+│ • Chat 2       │
+│                │
+│ Yesterday      │
+│ • Chat 3       │
+│                │
+│ ⚙️ Settings    │
+└────────────────┘
+```
+
+=== 3.2 Component Design
+
+==== 3.2.1 Header Bar
+
+```html
+<header class="header">
+  <!-- Left: Menu & Logo -->
+  <div class="header-left">
+    <button class="menu-button" aria-label="Menu">☰</button>
+    <h1 class="logo">Local Prompt Agent</h1>
+  </div>
+  
+  <!-- Right: Controls -->
+  <div class="header-right">
+    <!-- Language Selector -->
+    <select class="language-selector" aria-label="Language">
+      <option value="en">English</option>
+      <option value="zh-TW">繁體中文</option>
+      <option value="zh-CN">简体中文</option>
+    </select>
+    
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" aria-label="Toggle dark mode">
+      🌓
+    </button>
+    
+    <!-- Settings -->
+    <button class="settings-button" aria-label="Settings">
+      ⚙️
+    </button>
+    
+    <!-- User Menu -->
+    <button class="user-menu" aria-label="User menu">
+      👤
+    </button>
+  </div>
+</header>
+```
+
+**Styling** (Modern, Clean):
+```css
+.header {
+  height: 60px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  background: var(--surface-color);
+  backdrop-filter: blur(10px); /* Glassmorphism */
+}
+
+.logo {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-left: 12px;
+}
+
+.header-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: var(--hover-color);
+}
+```
+
+==== 3.2.2 Sidebar
+
+```html
+<aside class="sidebar" id="sidebar">
+  <!-- New Chat Button -->
+  <button class="new-chat-button">
+    <span class="icon">➕</span>
+    <span class="text">New Chat</span>
+  </button>
+  
+  <!-- Chat History -->
+  <nav class="chat-history">
+    <!-- Today -->
+    <div class="history-group">
+      <h3 class="history-title">Today</h3>
+      <ul class="history-list">
+        <li class="history-item active">
+          <span class="chat-icon">💬</span>
+          <span class="chat-title">How does RAG work?</span>
+          <button class="delete-chat" aria-label="Delete">🗑️</button>
+        </li>
+        <li class="history-item">
+          <span class="chat-icon">💬</span>
+          <span class="chat-title">Explain multi-agent...</span>
+        </li>
+      </ul>
+    </div>
+    
+    <!-- Yesterday -->
+    <div class="history-group">
+      <h3 class="history-title">Yesterday</h3>
+      <ul class="history-list">
+        <li class="history-item">
+          <span class="chat-icon">💬</span>
+          <span class="chat-title">Setup local LLM</span>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  
+  <!-- Bottom Actions -->
+  <div class="sidebar-footer">
+    <button class="settings-link">
+      <span class="icon">⚙️</span>
+      <span class="text">Settings</span>
+    </button>
+  </div>
+</aside>
+```
+
+**Styling**:
+```css
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.new-chat-button {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--surface-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  transition: all 0.2s;
+}
+
+.new-chat-button:hover {
+  background: var(--hover-color);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 4px;
+  position: relative;
+}
+
+.history-item:hover {
+  background: var(--hover-color);
+}
+
+.history-item.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.chat-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.delete-chat {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.history-item:hover .delete-chat {
+  opacity: 1;
+}
+```
+
+==== 3.2.3 Main Chat Area
+
+```html
+<main class="chat-area">
+  <!-- Agent/Model Selector Bar -->
+  <div class="selector-bar">
+    <select class="agent-selector">
+      <option>Agent: Default</option>
+      <option>Agent: Research Assistant</option>
+      <option>Agent: Code Expert</option>
+    </select>
+    
+    <select class="model-selector">
+      <option>Model: Ollama - Mistral</option>
+      <option>Model: OpenAI - GPT-4</option>
+      <option>Model: Claude - 3 Opus</option>
+    </select>
+  </div>
+  
+  <!-- Messages Container -->
+  <div class="messages" id="messages">
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-icon">🤖</div>
+      <h2>Hello! How can I help you today?</h2>
+      <p>你好！我能為你做什麼？</p>
+      
+      <!-- Suggested Prompts -->
+      <div class="suggested-prompts">
+        <button class="prompt-card">
+          <span class="prompt-icon">💡</span>
+          <span class="prompt-text">Explain RAG systems</span>
+        </button>
+        <button class="prompt-card">
+          <span class="prompt-icon">📄</span>
+          <span class="prompt-text">Analyze a PDF document</span>
+        </button>
+        <button class="prompt-card">
+          <span class="prompt-icon">💻</span>
+          <span class="prompt-text">Help with Python code</span>
+        </button>
+        <button class="prompt-card">
+          <span class="prompt-icon">🌐</span>
+          <span class="prompt-text">Multi-language support</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- User Message -->
+    <div class="message message-user">
+      <div class="message-avatar">👤</div>
+      <div class="message-content">
+        <div class="message-text">
+          How does RAG work in the Local Prompt Agent?
+        </div>
+        <div class="message-meta">
+          <span class="message-time">3:45 PM</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Assistant Message -->
+    <div class="message message-assistant">
+      <div class="message-avatar">🤖</div>
+      <div class="message-content">
+        <div class="message-text markdown-body">
+          <p>RAG (Retrieval-Augmented Generation) in the Local Prompt Agent works by:</p>
+          <ol>
+            <li><strong>Document Processing</strong>: PDFs and documents are processed...</li>
+            <li><strong>Embedding Generation</strong>: Text chunks are converted...</li>
+          </ol>
+          
+          <!-- Code Block -->
+          <pre><code class="language-python">
+# Example RAG query
+result = rag_system.query("explain RAG")
+print(result["answer"])
+          </code></pre>
+        </div>
+        
+        <!-- Message Actions -->
+        <div class="message-actions">
+          <button class="action-button" title="Copy">
+            <span class="icon">📋</span> Copy
+          </button>
+          <button class="action-button" title="Regenerate">
+            <span class="icon">🔄</span> Regenerate
+          </button>
+          <button class="action-button" title="Good response">
+            <span class="icon">👍</span>
+          </button>
+          <button class="action-button" title="Bad response">
+            <span class="icon">👎</span>
+          </button>
+        </div>
+        
+        <div class="message-meta">
+          <span class="message-time">3:45 PM</span>
+          <span class="message-model">Ollama - Mistral</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Streaming Message (Being Generated) -->
+    <div class="message message-assistant streaming">
+      <div class="message-avatar">🤖</div>
+      <div class="message-content">
+        <div class="message-text markdown-body">
+          The Local Prompt Agent uses ChromaDB as the vector store, which<span class="cursor">▊</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Input Area -->
+  <div class="input-area">
+    <div class="input-container">
+      <!-- Attachments -->
+      <button class="attach-button" aria-label="Attach file">
+        📎
+      </button>
+      
+      <!-- Text Input -->
+      <textarea 
+        class="message-input" 
+        placeholder="Type your message... (Shift+Enter for new line)"
+        rows="1"
+        id="messageInput"
+      ></textarea>
+      
+      <!-- Voice Input -->
+      <button class="voice-button" aria-label="Voice input">
+        🎤
+      </button>
+      
+      <!-- Send Button -->
+      <button class="send-button" aria-label="Send message">
+        <span class="send-icon">➤</span>
+      </button>
+    </div>
+    
+    <!-- Input Footer -->
+    <div class="input-footer">
+      <span class="input-hint">Press Enter to send, Shift+Enter for new line</span>
+      <span class="character-count">0 / 4000</span>
+    </div>
+  </div>
+</main>
+```
+
+**Styling**:
+```css
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--background-color);
+}
+
+.selector-bar {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  gap: 12px;
+  background: var(--surface-color);
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  scroll-behavior: smooth;
+}
+
+/* Empty State */
+.empty-state {
+  max-width: 600px;
+  margin: 10vh auto;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.suggested-prompts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.prompt-card {
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--surface-color);
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.prompt-card:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Message */
+.message {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  max-width: 800px;
+}
+
+.message-user {
+  margin-left: auto;
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  background: var(--avatar-bg);
+}
+
+.message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-text {
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: var(--message-bg);
+  line-height: 1.6;
+}
+
+.message-user .message-text {
+  background: var(--primary-color);
+  color: white;
+  border-radius: 16px 16px 4px 16px;
+}
+
+.message-assistant .message-text {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 16px 16px 16px 4px;
+}
+
+/* Streaming Animation */
+.streaming .cursor {
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Message Actions */
+.message-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.message:hover .message-actions {
+  opacity: 1;
+}
+
+.action-button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Input Area */
+.input-area {
+  border-top: 1px solid var(--border-color);
+  padding: 16px 20px;
+  background: var(--surface-color);
+}
+
+.input-container {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  background: var(--input-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 24px;
+  padding: 8px 12px;
+  transition: border-color 0.2s;
+}
+
+.input-container:focus-within {
+  border-color: var(--primary-color);
+}
+
+.message-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  resize: none;
+  font-size: 15px;
+  line-height: 1.5;
+  max-height: 200px;
+  padding: 8px 0;
+}
+
+.send-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.send-button:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: scale(1.05);
+}
+
+.send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.input-footer {
+  max-width: 800px;
+  margin: 8px auto 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+```
+
+== 4. Color Schemes (Light & Dark Mode)
+
+=== 4.1 Light Mode (Default)
+
+```css
+:root {
+  /* Background */
+  --background-color: #ffffff;
+  --surface-color: #f8f9fa;
+  --sidebar-bg: #f5f5f5;
+  
+  /* Text */
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  
+  /* Borders */
+  --border-color: #e5e5e5;
+  
+  /* Primary Colors */
+  --primary-color: #0066ff;
+  --primary-hover: #0052cc;
+  
+  /* Interactive */
+  --hover-color: #f0f0f0;
+  --input-bg: #ffffff;
+  
+  /* Messages */
+  --message-bg: #f8f9fa;
+  --avatar-bg: #e5e5e5;
+  
+  /* Accent */
+  --success-color: #00c853;
+  --error-color: #ff3d00;
+  --warning-color: #ffc107;
+}
+```
+
+=== 4.2 Dark Mode
+
+```css
+[data-theme="dark"] {
+  /* Background */
+  --background-color: #1a1a1a;
+  --surface-color: #2d2d2d;
+  --sidebar-bg: #242424;
+  
+  /* Text */
+  --text-primary: #e5e5e5;
+  --text-secondary: #a0a0a0;
+  
+  /* Borders */
+  --border-color: #404040;
+  
+  /* Primary Colors */
+  --primary-color: #4d9fff;
+  --primary-hover: #3385ff;
+  
+  /* Interactive */
+  --hover-color: #353535;
+  --input-bg: #2d2d2d;
+  
+  /* Messages */
+  --message-bg: #2d2d2d;
+  --avatar-bg: #404040;
+  
+  /* Accent */
+  --success-color: #00e676;
+  --error-color: #ff5252;
+  --warning-color: #ffd740;
+}
+```
+
+=== 4.3 Theme Toggle Implementation
+
+```javascript
+// Theme switcher
+const themeToggle = document.querySelector('.theme-toggle');
+const root = document.documentElement;
+
+// Load saved theme
+const savedTheme = localStorage.getItem('theme') || 'light';
+root.setAttribute('data-theme', savedTheme);
+
+themeToggle.addEventListener('click', () => {
+  const current Theme = root.getAttribute('data-theme');
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  
+  root.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  
+  // Update icon
+  themeToggle.textContent = newTheme === 'light' ? '🌓' : '🌞';
+});
+```
+
+== 5. Modern Features Implementation
+
+=== 5.1 Streaming Response (Real-time)
+
+**WebSocket streaming like ChatGPT**:
+
+```javascript
+async function sendMessage(message) {
+  const messagesDiv = document.getElementById('messages');
+  
+  // Add user message
+  addMessage('user', message);
+  
+  // Add streaming assistant message
+  const assistantMsg = addMessage('assistant', '', true);
+  const textElement = assistantMsg.querySelector('.message-text');
+  
+  // Connect WebSocket
+  const ws = new WebSocket('ws://localhost:8000/ws/chat');
+  
+  ws.onopen = () => {
+    ws.send(JSON.stringify({
+      message: message,
+      agent: selectedAgent,
+      model: selectedModel
+    }));
+  };
+  
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    
+    if (data.type === 'token') {
+      // Append token to text (streaming)
+      textElement.textContent += data.token;
+      scrollToBottom();
+    } else if (data.type === 'done') {
+      // Remove streaming indicator
+      assistantMsg.classList.remove('streaming');
+      // Add message actions
+      addMessageActions(assistantMsg);
+      ws.close();
+    }
+  };
+  
+  ws.onerror = (error) => {
+    textElement.textContent = 'Error: Failed to get response';
+    assistantMsg.classList.remove('streaming');
+  };
+}
+
+function addMessage(role, text, streaming = false) {
+  const messagesDiv = document.getElementById('messages');
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message message-${role}`;
+  if (streaming) messageDiv.classList.add('streaming');
+  
+  messageDiv.innerHTML = `
+    <div class="message-avatar">${role === 'user' ? '👤' : '🤖'}</div>
+    <div class="message-content">
+      <div class="message-text markdown-body">
+        ${text}${streaming ? '<span class="cursor">▊</span>' : ''}
+      </div>
+      <div class="message-meta">
+        <span class="message-time">${formatTime(new Date())}</span>
+      </div>
+    </div>
+  `;
+  
+  messagesDiv.appendChild(messageDiv);
+  scrollToBottom();
+  
+  return messageDiv;
+}
+```
+
+=== 5.2 Code Syntax Highlighting
+
+**Using Prism.js or highlight.js**:
+
+```html
+<!-- Include highlight.js -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<script>
+// Highlight code blocks
+function highlightCode(element) {
+  const codeBlocks = element.querySelectorAll('pre code');
+  codeBlocks.forEach((block) => {
+    hljs.highlightElement(block);
+    addCopyButton(block);
+  });
+}
+
+function addCopyButton(codeBlock) {
+  const pre = codeBlock.parentElement;
+  const button = document.createElement('button');
+  button.className = 'copy-code-button';
+  button.textContent = 'Copy';
+  
+  button.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(codeBlock.textContent);
+    button.textContent = 'Copied!';
+    setTimeout(() => button.textContent = 'Copy', 2000);
+  });
+  
+  pre.appendChild(button);
+}
+</script>
+
+<style>
+pre {
+  position: relative;
+  background: #1e1e1e;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.copy-code-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+pre:hover .copy-code-button {
+  opacity: 1;
+}
+
+.copy-code-button:hover {
+  background: rgba(255,255,255,0.2);
+}
+</style>
+```
+
+=== 5.3 Markdown Rendering
+
+**Using markdown-it**:
+
+```javascript
+import markdownit from 'markdown-it';
+
+const md = markdownit({
+  html: false,        // Disable HTML tags for security
+  breaks: true,       // Convert \n to <br>
+  linkify: true,      // Auto-convert URLs to links
+  typographer: true   // Smart quotes, dashes, ellipses
+});
+
+function renderMarkdown(text) {
+  // Render markdown
+  let html = md.render(text);
+  
+  // Sanitize (prevent XSS)
+  return DOMPurify.sanitize(html);
+}
+
+// Use in message display
+function addAssistantMessage(text) {
+  const html = renderMarkdown(text);
+  const messageDiv = createMessageElement('assistant');
+  messageDiv.querySelector('.message-text').innerHTML = html;
+  
+  // Highlight code blocks
+  highlightCode(messageDiv);
+  
+  return messageDiv;
+}
+```
+
+=== 5.4 Auto-resize Textarea
+
+```javascript
+const textarea = document.getElementById('messageInput');
+
+textarea.addEventListener('input', () => {
+  // Reset height to calculate new height
+  textarea.style.height = 'auto';
+  
+  // Set new height based on content (max 200px)
+  const newHeight = Math.min(textarea.scrollHeight, 200);
+  textarea.style.height = newHeight + 'px';
+  
+  // Update character count
+  const count = textarea.value.length;
+  document.querySelector('.character-count').textContent = 
+    `${count} / 4000`;
+});
+
+// Handle Enter key
+textarea.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage(textarea.value);
+    textarea.value = '';
+    textarea.style.height = 'auto';
+  }
+});
+```
+
+=== 5.5 Mobile Responsive
+
+```css
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -280px;
+    width: 280px;
+    transition: left 0.3s;
+    z-index: 1000;
+  }
+  
+  .sidebar.open {
+    left: 0;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  }
+  
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 999;
+  }
+  
+  .overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+  
+  .selector-bar {
+    flex-direction: column;
+  }
+  
+  .message {
+    max-width: 100%;
+  }
+  
+  .suggested-prompts {
+    grid-template-columns: 1fr;
+  }
+}
+```
+
+```javascript
+// Mobile menu toggle
+const menuButton = document.querySelector('.menu-button');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.createElement('div');
+overlay.className = 'overlay';
+document.body.appendChild(overlay);
+
+menuButton.addEventListener('click', () => {
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('active');
+});
+
+overlay.addEventListener('click', () => {
+  sidebar.classList.remove('open');
+  overlay.classList.remove('active');
+});
+```
+
+== 6. Accessibility (WCAG 2.1 AA)
+
+=== 6.1 Keyboard Navigation
+
+```javascript
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  // Ctrl/Cmd + K: Focus search/input
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('messageInput').focus();
+  }
+  
+  // Ctrl/Cmd + N: New chat
+  if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+    e.preventDefault();
+    createNewChat();
+  }
+  
+  // Escape: Close modals/sidebar
+  if (e.key === 'Escape') {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+  }
+});
+
+// Arrow key navigation in chat history
+const historyItems = document.querySelectorAll('.history-item');
+let currentIndex = 0;
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    if (document.activeElement.classList.contains('history-item')) {
+      e.preventDefault();
+      
+      if (e.key === 'ArrowUp' && currentIndex > 0) {
+        currentIndex--;
+      } else if (e.key === 'ArrowDown' && currentIndex < historyItems.length - 1) {
+        currentIndex++;
+      }
+      
+      historyItems[currentIndex].focus();
+    }
+  }
+});
+```
+
+=== 6.2 Screen Reader Support
+
+```html
+<!-- Accessible markup -->
+<main role="main" aria-label="Chat conversation">
+  <div 
+    class="messages" 
+    role="log" 
+    aria-live="polite" 
+    aria-atomic="false"
+  >
+    <div class="message message-user" role="article">
+      <div class="message-avatar" aria-hidden="true">👤</div>
+      <div class="message-content">
+        <div class="message-text">
+          <p>User message</p>
+        </div>
+        <div class="message-meta" aria-label="Sent at 3:45 PM">
+          3:45 PM
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="input-area" role="region" aria-label="Message input">
+  <textarea
+    aria-label="Type your message"
+    aria-describedby="input-hint"
+  ></textarea>
+  <span id="input-hint" class="sr-only">
+    Press Enter to send, Shift+Enter for new line
+  </span>
+</div>
+
+<style>
+/* Screen reader only class */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border-width: 0;
+}
+</style>
+```
+
+=== 6.3 Color Contrast
+
+```css
+/* Ensure WCAG AA contrast ratios */
+
+/* Light mode: 4.5:1 for normal text */
+--text-primary: #1a1a1a;        /* 15.3:1 on white */
+--text-secondary: #666666;      /* 5.7:1 on white */
+--primary-color: #0066ff;       /* 4.5:1 on white */
+
+/* Dark mode: 4.5:1 for normal text */
+--text-primary: #e5e5e5;        /* 12.6:1 on #1a1a1a */
+--text-secondary: #a0a0a0;      /* 5.3:1 on #1a1a1a */
+--primary-color: #4d9fff;       /* 5.9:1 on #1a1a1a */
+
+/* Button states */
+button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+```
+
+== 7. Performance Optimization
+
+=== 7.1 Virtual Scrolling (For Long Conversations)
+
+```javascript
+// Use Intersection Observer for lazy rendering
+const messageObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        // Render message content
+        const message = entry.target;
+        if (!message.dataset.rendered) {
+          renderMessage(message);
+          message.dataset.rendered = 'true';
+        }
+      }
+    });
+  },
+  { rootMargin: '200px' } // Pre-load 200px ahead
+);
+
+// Observe all messages
+document.querySelectorAll('.message').forEach(msg => {
+  messageObserver.observe(msg);
+});
+```
+
+=== 7.2 Debounce Input
+
+```javascript
+// Debounce character count update
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+const updateCharCount = debounce((count) => {
+  document.querySelector('.character-count').textContent = 
+    `${count} / 4000`;
+}, 100);
+
+textarea.addEventListener('input', (e) => {
+  updateCharCount(e.target.value.length);
+});
+```
+
+=== 7.3 Image Optimization
+
+```html
+<!-- Use lazy loading for images -->
+<img 
+  src="placeholder.jpg" 
+  data-src="actual-image.jpg" 
+  loading="lazy"
+  alt="Description"
+>
+
+<script>
+// Lazy load images
+const imageObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const img = entry.target;
+      img.src = img.dataset.src;
+      imageObserver.unobserve(img);
+    }
+  });
+});
+
+document.querySelectorAll('img[data-src]').forEach(img => {
+  imageObserver.observe(img);
+});
+</script>
+```
+
+== 8. Progressive Web App (PWA)
+
+=== 8.1 Service Worker
+
+```javascript
+// sw.js
+const CACHE_NAME = 'local-prompt-agent-v1';
+const urlsToCache = [
+  '/',
+  '/static/css/main.css',
+  '/static/js/main.js',
+  '/static/icons/icon-192.png',
+  '/static/icons/icon-512.png'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
+  );
+});
+```
+
+=== 8.2 Manifest
+
+```json
+{
+  "name": "Local Prompt Agent",
+  "short_name": "LPA",
+  "description": "Privacy-first local AI assistant",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0066ff",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "orientation": "any"
+}
+```
+
+== 9. Technology Stack
+
+```yaml
+frontend:
+  framework: "React 18+ or Vue 3+ (or vanilla JS for simplicity)"
+  styling: "CSS Variables + Modern CSS"
+  markdown: "markdown-it ^13.0.0"
+  syntax_highlighting: "highlight.js ^11.9.0"
+  sanitization: "DOMPurify ^3.0.0"
+  
+build_tools:
+  bundler: "Vite ^5.0.0 (fast, modern)"
+  typescript: "Optional (but recommended)"
+  
+pwa:
+  service_worker: "Workbox ^7.0.0"
+  manifest: "Standard web manifest"
+```
+
+== 10. Implementation Priority
+
+=== Phase 1: Core UI (Week 1-2)
+1. Basic layout (header, sidebar, chat area)
+2. Message display (user/assistant)
+3. Input area with send
+4. Light/dark mode toggle
+5. Responsive mobile layout
+
+=== Phase 2: Features (Week 3-4)
+1. Streaming responses (WebSocket)
+2. Markdown rendering
+3. Code syntax highlighting
+4. Copy/regenerate buttons
+5. Chat history
+
+=== Phase 3: Polish (Week 5-6)
+1. Animations and transitions
+2. Keyboard shortcuts
+3. Accessibility improvements
+4. Performance optimization
+5. PWA support
+
+== 11. Success Criteria
+
+=== Functionality
+✓ Modern, competitive design matching ChatGPT/Claude quality  
+✓ Streaming responses in real-time  
+✓ Code blocks with syntax highlighting  
+✓ Markdown support (bold, lists, tables, etc.)  
+✓ Dark/light mode toggle  
+✓ Mobile responsive (works on all screen sizes)  
+✓ Fast and smooth (< 100ms interactions)  
+
+=== Accessibility
+✓ WCAG 2.1 AA compliant  
+✓ Keyboard navigation works  
+✓ Screen reader compatible  
+✓ Proper ARIA labels  
+✓ Good color contrast  
+
+=== User Experience
+✓ Intuitive and easy to use  
+✓ Clean, uncluttered interface  
+✓ Feels professional and polished  
+✓ Works offline (PWA)  
+✓ Multi-language UI (EN, 繁體中文, 简体中文)  
+
+---
+
+**Note**: This design follows Rule #1: Keep it simple. The UI is clean, modern, and competitive while avoiding over-engineering. Uses standard web technologies (CSS Variables, vanilla JS or simple framework) for maintainability.
