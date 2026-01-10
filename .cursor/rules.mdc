@@ -1,0 +1,210 @@
+# Local Prompt Agent - Cursor Rules
+
+## 🎯 Rule #1: KEEP IT SIMPLE
+- Don't overcomplicate things
+- Write clear, readable code
+- Prefer simple solutions over clever ones
+- If it's hard to explain, it's too complex
+
+## 🐍 Python 3.11+ Guidelines
+
+### Code Style
+- Use Python 3.11+ features (match-case, type hints, etc.)
+- Follow PEP 8 (enforced by `black` and `ruff`)
+- Use type hints everywhere: `def function(arg: str) -> dict[str, Any]:`
+- Use `async`/`await` for I/O operations
+- Keep functions small (< 50 lines ideally)
+
+### Type Safety
+- Always use type hints
+- Use `from typing import` for complex types
+- Use `Pydantic` models for validation
+- Run `mypy` before committing
+
+### Imports
+- Standard library first
+- Third-party second  
+- Local imports last
+- Use absolute imports: `from local_prompt_agent.agent import Agent`
+
+## 📁 Project Structure
+
+```
+src/local_prompt_agent/
+├── agent.py                    # Main agent class
+├── backends/                   # LLM backends (Ollama, OpenAI, etc.)
+├── conversation/               # Conversation management
+├── tools/                      # Tool registry and built-in tools
+├── document/                   # Document processing (PDF, DOCX)
+├── rag/                        # RAG system (embeddings, vector store)
+├── api/                        # FastAPI REST API
+├── cli/                        # Click CLI interface
+└── utils/                      # Utilities and helpers
+```
+
+## 🔑 Key Principles
+
+### 1. Privacy First
+- All processing happens locally by default
+- No data sent to cloud without explicit user consent
+- Use local models (Ollama) as default
+
+### 2. Simple Architecture
+- One responsibility per class
+- Clear interfaces between components
+- Dependency injection for testing
+
+### 3. Async by Default
+- Use `async`/`await` for all I/O
+- Use `aiohttp` for HTTP requests
+- Use `asyncio.gather()` for parallel operations
+
+### 4. Error Handling
+- Use specific exceptions, not generic `Exception`
+- Always log errors with context
+- Return user-friendly error messages
+- Never crash silently
+
+## 💻 Code Patterns
+
+### Agent Pattern
+```python
+class Agent:
+    def __init__(self, config: AgentConfig):
+        self.config = config
+        self.backend = initialize_backend(config)
+    
+    async def execute(self, message: str) -> str:
+        # Simple, clear logic
+        response = await self.backend.complete(message)
+        return response
+```
+
+### Tool Pattern
+```python
+class Tool:
+    name: str
+    description: str
+    
+    async def execute(self, params: dict[str, Any]) -> dict[str, Any]:
+        # Do one thing well
+        result = await self._do_work(params)
+        return {"success": True, "result": result}
+```
+
+### Configuration
+- Use Pydantic models for config
+- Support YAML and environment variables
+- Validate on load, fail fast
+
+## 📚 Dependencies
+
+### Core
+- `fastapi` - REST API (keep routes simple)
+- `click` - CLI (one command = one function)
+- `pydantic` - Validation (use BaseModel)
+- `sqlalchemy` - Database (use async)
+
+### AI/ML
+- `ollama-python` - Local LLMs (preferred)
+- `openai` - Cloud LLMs (optional)
+- `sentence-transformers` - Embeddings
+
+### Documents & RAG
+- `pdfplumber` - PDF extraction (simple API)
+- `chromadb` - Vector store (easy setup)
+- `langchain` - Optional RAG utilities
+
+## ✅ Testing
+
+- Write tests for every public function
+- Use `pytest` and `pytest-asyncio`
+- Mock external services (LLMs, APIs)
+- Test error cases, not just happy paths
+
+```python
+async def test_agent_execute():
+    agent = Agent(test_config)
+    result = await agent.execute("test")
+    assert result is not None
+```
+
+## 🚫 Anti-Patterns to Avoid
+
+1. **Over-engineering** - Start simple, add complexity only when needed
+2. **God Classes** - Break large classes into smaller ones
+3. **Deep Nesting** - Max 3 levels of indentation
+4. **Magic Numbers** - Use constants or config
+5. **Implicit Dependencies** - Pass dependencies explicitly
+6. **Premature Optimization** - Make it work, then make it fast
+
+## 📝 Documentation
+
+- Docstrings for all public functions
+- Type hints ARE documentation
+- Keep comments short and relevant
+- Update docs when code changes
+
+```python
+async def execute_prompt(message: str, agent: str = "default") -> str:
+    """
+    Execute a prompt with specified agent.
+    
+    Args:
+        message: The prompt text
+        agent: Agent name (default: "default")
+    
+    Returns:
+        The agent's response
+    """
+```
+
+## 🔄 Development Workflow
+
+1. **Start Simple** - Get it working first
+2. **Add Types** - Add type hints
+3. **Write Tests** - Test the happy path
+4. **Handle Errors** - Add error handling
+5. **Document** - Add docstrings
+6. **Format** - Run `black` and `ruff`
+7. **Type Check** - Run `mypy`
+8. **Commit** - Clear commit message
+
+## 🎨 Formatting
+
+- Run `black .` before committing
+- Run `ruff check .` and fix issues
+- Line length: 88 characters (black default)
+- Use double quotes for strings
+
+## 🏗️ Implementation Priority
+
+### Phase 1: Core
+1. Agent class (simple execution)
+2. One LLM backend (Ollama)
+3. Basic conversation storage
+4. Simple CLI
+
+### Phase 2: Features
+1. Multiple backends
+2. Tool system
+3. REST API
+4. More CLI commands
+
+### Phase 3: Advanced
+1. Document processing
+2. RAG system
+3. Multi-agent
+4. Web UI (optional)
+
+## 💡 Remember
+
+- **Simple > Complex**
+- **Working > Perfect**
+- **Tested > Untested**
+- **Clear > Clever**
+- **Local > Cloud**
+
+When in doubt, choose the simpler option. 
+
+Review specs in `specs/` directory for detailed requirements.

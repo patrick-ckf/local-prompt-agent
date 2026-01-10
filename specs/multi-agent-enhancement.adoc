@@ -1,0 +1,1084 @@
+= Multi-Agent System Enhancement
+:toc: left
+:toclevels: 4
+:sectnums:
+:icons: font
+:source-highlighter: rouge
+:version: 1.0.0
+:date: {docdate}
+:author: Patrick Cheung
+
+== Document Information
+
+[cols="1,3"]
+|===
+|Version |{version}
+|Date |{date}
+|Author |{author}
+|Status |Enhancement Proposal
+|Related Document |specification.adoc, pdf-rag-design.adoc
+|===
+
+== 1. Overview
+
+=== 1.1 Purpose
+
+This enhancement adds comprehensive **multi-agent architecture** support to the Local Prompt Agent system, enabling:
+
+* Multiple customized agent profiles with different personalities/specializations
+* Each agent can connect to different LLM models with fallback support
+* Agent orchestration and task delegation
+* Model comparison and ensemble responses
+* Agent collaboration and handoff
+
+=== 1.2 Motivation
+
+Users need different "AI personalities" for different tasks:
+
+* **Research Assistant**: Analytical, fact-focused, uses RAG on papers
+* **Code Expert**: Technical, precise, accesses code execution tools
+* **Creative Writer**: Imaginative, high temperature, uses image tools
+* **Data Analyst**: Statistical, uses computation tools
+* **Customer Support**: Empathetic, uses FAQ database
+
+Current system can do this with different configurations, but not elegantly or dynamically.
+
+=== 1.3 Goals
+
+* ✅ Easy to define multiple agent profiles
+* ✅ Each agent uses different models/tools/settings
+* ✅ Route tasks to appropriate agents automatically
+* ✅ Support agent collaboration on complex tasks
+* ✅ Compare responses from multiple models
+* ✅ Hot-reload agent configurations
+* ✅ Maintain backward compatibility
+
+== 2. Functional Requirements
+
+=== 2.1 Agent Profile Management
+
+==== FR-MA-1.1: Agent Definition
+[cols="1,3"]
+|===
+|ID |FR-MA-1.1
+|Priority |High
+|Description |The system SHALL support defining multiple named agent profiles
+|===
+
+*Agent Profile Components:*
+
+* **Name**: Unique identifier
+* **Description**: What the agent specializes in
+* **Model Configuration**: Primary and fallback models
+* **System Prompt**: Agent personality/instructions
+* **Tools**: Allowed tools for this agent
+* **RAG Collection**: Specific document collection
+* **Parameters**: Temperature, max_tokens, etc.
+* **Constraints**: Rate limits, cost limits
+
+*Example Definition:*
+
+```yaml
+agent:
+  name: "medical_advisor"
+  description: "Medical literature analysis and advice"
+  
+  models:
+    primary: "ollama:meditron"
+    fallback: "openai:gpt-4-turbo"
+    comparison: ["claude-3-opus", "gemini-pro"]
+  
+  system_prompt: |
+    You are a medical AI assistant specialized in analyzing medical 
+    literature and providing evidence-based information. Always cite 
+    sources and disclaimer that you're not a substitute for professional 
+    medical advice.
+  
+  tools:
+    allowed:
+      - document_rag
+      - pubmed_search
+      - drug_database
+      - citation_formatter
+    denied:
+      - code_execution
+      - file_write
+  
+  rag:
+    collection: "medical_papers"
+    k: 10
+    min_confidence: 0.7
+  
+  parameters:
+    temperature: 0.2  # Low for medical accuracy
+    max_tokens: 2000
+    top_p: 0.9
+  
+  constraints:
+    max_requests_per_hour: 100
+    max_tokens_per_day: 50000
+    require_citation: true
+```
+
+==== FR-MA-1.2: Agent Registry
+[cols="1,3"]
+|===
+|ID |FR-MA-1.2
+|Priority |High
+|Description |The system SHALL maintain a registry of available agents
+|===
+
+*Registry Operations:*
+
+* List all available agents
+* Get agent by name
+* Register new agent (at runtime)
+* Unregister agent
+* Update agent configuration (hot-reload)
+* Get agent capabilities/metadata
+
+==== FR-MA-1.3: Agent Profiles Storage
+[cols="1,3"]
+|===
+|ID |FR-MA-1.3
+|Priority |Medium
+|Description |The system SHALL persist agent profiles across sessions
+|===
+
+*Storage Locations:*
+
+* System-wide: `/etc/local-prompt-agent/agents/`
+* User-specific: `~/.local-prompt-agent/agents/`
+* Project-specific: `./.agents/`
+* Priority: project > user > system
+
+=== 2.2 Agent Selection and Routing
+
+==== FR-MA-2.1: Manual Agent Selection
+[cols="1,3"]
+|===
+|ID |FR-MA-2.1
+|Priority |High
+|Description |The system SHALL allow users to explicitly select an agent
+|===
+
+*Selection Methods:*
+
+```bash
+# CLI
+agent chat --agent research_assistant "Analyze this paper"
+
+# API
+POST /api/v1/chat/completions
+{
+  "agent": "research_assistant",
+  "message": "Analyze this paper"
+}
+
+# Interactive mode
+> /agent research_assistant
+> Analyze this paper
+```
+
+==== FR-MA-2.2: Automatic Agent Routing
+[cols="1,3"]
+|===
+|ID |FR-MA-2.2
+|Priority |Medium
+|Description |The system SHOULD automatically route requests to appropriate agents
+|===
+
+*Routing Strategies:*
+
+1. **Keyword-Based**: Match request keywords to agent specializations
+2. **Semantic**: Use embeddings to match request to agent expertise
+3. **LLM-Based**: Use meta-agent to decide routing
+4. **User History**: Learn from past agent selections
+
+*Example:*
+
+```python
+# User: "Debug this Python code"
+# System analyzes request
+# System routes to: code_expert agent
+
+# User: "What are the side effects of aspirin?"
+# System analyzes request
+# System routes to: medical_advisor agent
+```
+
+==== FR-MA-2.3: Agent Capabilities Discovery
+[cols="1,3"]
+|===
+|ID |FR-MA-2.3
+|Priority |Medium
+|Description |The system SHALL expose agent capabilities for routing decisions
+|===
+
+*Capability Metadata:*
+
+```yaml
+agent:
+  name: "research_assistant"
+  capabilities:
+    domains:
+      - academic_research
+      - scientific_literature
+      - citation_analysis
+    languages:
+      - english
+      - chinese
+      - spanish
+    file_types:
+      - pdf
+      - docx
+    skills:
+      - document_analysis
+      - summarization
+      - question_answering
+      - citation_extraction
+```
+
+=== 2.3 Multi-Model Support
+
+==== FR-MA-3.1: Model per Agent
+[cols="1,3"]
+|===
+|ID |FR-MA-3.1
+|Priority |High
+|Description |Each agent SHALL be able to use a different LLM model
+|===
+
+*Model Assignment:*
+
+```yaml
+agents:
+  - name: "fast_responder"
+    model: "ollama:llama2"  # Fast, local
+    
+  - name: "smart_analyst"
+    model: "openai:gpt-4-turbo"  # Powerful, cloud
+    
+  - name: "code_specialist"
+    model: "ollama:codellama"  # Code-optimized
+```
+
+==== FR-MA-3.2: Model Fallback Chain
+[cols="1,3"]
+|===
+|ID |FR-MA-3.2
+|Priority |High
+|Description |Each agent SHALL support fallback models if primary fails
+|===
+
+*Fallback Configuration:*
+
+```yaml
+agent:
+  name: "reliable_agent"
+  models:
+    primary: "ollama:mistral"
+    fallback:
+      - "ollama:llama2"
+      - "openai:gpt-3.5-turbo"
+      - "anthropic:claude-haiku"
+  
+  fallback_conditions:
+    - error  # Any error
+    - timeout  # Request timeout
+    - rate_limit  # Rate limit hit
+    - quality_low  # Response quality check failed
+```
+
+==== FR-MA-3.3: Multi-Model Comparison
+[cols="1,3"]
+|===
+|ID |FR-MA-3.3
+|Priority |Low
+|Description |The system SHOULD support comparing responses from multiple models
+|===
+
+*Comparison Mode:*
+
+```bash
+# Compare 3 models
+agent chat --compare "mistral,gpt-4,claude" "Explain quantum entanglement"
+
+# Output:
+# ┌─────────────────────────────────────────────┐
+# │ Model: Mistral (0.8s, $0.001)              │
+# │ Response: Quantum entanglement is...       │
+# └─────────────────────────────────────────────┘
+# 
+# ┌─────────────────────────────────────────────┐
+# │ Model: GPT-4 (1.2s, $0.015)               │
+# │ Response: Quantum entanglement refers...   │
+# └─────────────────────────────────────────────┘
+# 
+# ┌─────────────────────────────────────────────┐
+# │ Model: Claude (1.0s, $0.012)              │
+# │ Response: To understand entanglement...    │
+# └─────────────────────────────────────────────┘
+```
+
+==== FR-MA-3.4: Ensemble Responses
+[cols="1,3"]
+|===
+|ID |FR-MA-3.4
+|Priority |Low
+|Description |The system MAY synthesize responses from multiple models
+|===
+
+*Ensemble Strategies:*
+
+* **Voting**: For classification tasks
+* **Averaging**: For numerical outputs
+* **Synthesis**: Combine best parts of each response
+* **Validation**: Use one model to verify another
+
+=== 2.4 Agent Orchestration
+
+==== FR-MA-4.1: Meta-Agent (Orchestrator)
+[cols="1,3"]
+|===
+|ID |FR-MA-4.1
+|Priority |Medium
+|Description |The system SHOULD support a meta-agent for task delegation
+|===
+
+*Orchestrator Capabilities:*
+
+1. Analyze complex requests
+2. Break down into subtasks
+3. Route subtasks to specialized agents
+4. Combine results
+5. Handle errors and retries
+
+*Example Flow:*
+
+```
+User: "Write a technical blog post about microservices with code examples"
+
+Orchestrator:
+1. Identifies subtasks:
+   - Research microservices concepts → research_assistant
+   - Write engaging content → creative_writer
+   - Generate code examples → code_expert
+   - Review and edit → editor_agent
+
+2. Executes in sequence/parallel
+3. Combines outputs
+4. Returns final blog post
+```
+
+==== FR-MA-4.2: Agent Collaboration
+[cols="1,3"]
+|===
+|ID |FR-MA-4.2
+|Priority |Medium
+|Description |Agents SHOULD be able to collaborate on tasks
+|===
+
+*Collaboration Patterns:*
+
+* **Sequential**: Output of one agent feeds into next
+* **Parallel**: Multiple agents work independently, results merged
+* **Iterative**: Agents refine each other's work
+* **Peer Review**: One agent critiques another's output
+
+*Example:*
+
+```python
+# Sequential collaboration
+result = orchestrator.collaborate([
+    ("research_assistant", "Find information about topic X"),
+    ("creative_writer", "Write an article based on research"),
+    ("editor_agent", "Edit and polish the article")
+])
+```
+
+==== FR-MA-4.3: Agent Handoff
+[cols="1,3"]
+|===
+|ID |FR-MA-4.3
+|Priority |Low
+|Description |The system MAY support mid-conversation agent handoff
+|===
+
+*Handoff Scenarios:*
+
+* User explicitly requests different agent
+* Current agent recognizes task outside its expertise
+* Task complexity exceeds agent capabilities
+* Quality check suggests different agent needed
+
+*Example:*
+
+```
+User: "Explain how neural networks work"
+Agent: general_assistant
+
+Agent: "This is getting quite technical. Let me hand you 
+       off to our machine_learning_expert for better details."
+
+[Handoff to ml_expert agent with conversation context]
+
+Agent: ml_expert
+"Let me give you a detailed explanation..."
+```
+
+=== 2.5 Agent-Specific Features
+
+==== FR-MA-5.1: Agent-Specific Tools
+[cols="1,3"]
+|===
+|ID |FR-MA-5.1
+|Priority |High
+|Description |Each agent SHALL have access to specific tool subsets
+|===
+
+*Tool Assignment:*
+
+```yaml
+agents:
+  - name: "safe_assistant"
+    tools:
+      allowed: [web_search, calculator, date_time]
+      denied: [file_write, code_execution, system_commands]
+  
+  - name: "developer_assistant"
+    tools:
+      allowed: [file_operations, code_execution, git_operations]
+      sandbox: true
+      max_execution_time: 30
+```
+
+==== FR-MA-5.2: Agent-Specific RAG Collections
+[cols="1,3"]
+|===
+|ID |FR-MA-5.2
+|Priority |High
+|Description |Each agent SHALL access specific document collections
+|===
+
+*RAG Isolation:*
+
+```yaml
+agents:
+  - name: "legal_advisor"
+    rag_collections:
+      - legal_documents
+      - case_law
+      - contracts
+    rag_config:
+      k: 10
+      min_confidence: 0.8
+  
+  - name: "medical_advisor"
+    rag_collections:
+      - medical_journals
+      - clinical_guidelines
+      - drug_database
+    rag_config:
+      k: 15
+      min_confidence: 0.9
+```
+
+==== FR-MA-5.3: Agent Personas and Behavior
+[cols="1,3"]
+|===
+|ID |FR-MA-5.3
+|Priority |Medium
+|Description |Agents SHALL maintain consistent personalities
+|===
+
+*Persona Definition:*
+
+```yaml
+agent:
+  name: "friendly_tutor"
+  persona:
+    personality:
+      - patient
+      - encouraging
+      - thorough
+    communication_style:
+      - use_simple_language: true
+      - use_examples: true
+      - use_analogies: true
+      - verbosity: high
+    behavior:
+      - always_ask_followup: true
+      - confirm_understanding: true
+      - provide_step_by_step: true
+```
+
+=== 2.6 Agent Monitoring and Management
+
+==== FR-MA-6.1: Agent Usage Metrics
+[cols="1,3"]
+|===
+|ID |FR-MA-6.1
+|Priority |Medium
+|Description |The system SHALL track usage metrics per agent
+|===
+
+*Metrics to Track:*
+
+* Number of requests per agent
+* Average response time per agent
+* Success/failure rate
+* Token usage and costs
+* User satisfaction ratings
+* Most common tasks per agent
+
+==== FR-MA-6.2: Agent Performance Comparison
+[cols="1,3"]
+|===
+|ID |FR-MA-6.2
+|Priority |Low
+|Description |The system SHOULD provide agent performance analytics
+|===
+
+*Analytics:*
+
+```bash
+agent stats
+
+┌─────────────────────┬──────────┬─────────┬──────────┬─────────┐
+│ Agent               │ Requests │ Success │ Avg Time │ Cost    │
+├─────────────────────┼──────────┼─────────┼──────────┼─────────┤
+│ research_assistant  │ 1,234    │ 98.5%   │ 2.3s     │ $12.45  │
+│ code_expert        │ 856      │ 96.2%   │ 1.8s     │ $8.23   │
+│ creative_writer    │ 432      │ 99.1%   │ 3.1s     │ $18.92  │
+└─────────────────────┴──────────┴─────────┴──────────┴─────────┘
+```
+
+== 3. Architecture Design
+
+=== 3.1 Component Structure
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Local Prompt Agent                     │
+│                                                          │
+│  ┌────────────────────────────────────────────────────┐ │
+│  │           Agent Registry & Orchestrator            │ │
+│  └───────────────────┬────────────────────────────────┘ │
+│                      │                                   │
+│         ┌────────────┼────────────┬──────────────┐      │
+│         ▼            ▼            ▼              ▼      │
+│  ┌───────────┐ ┌───────────┐ ┌──────────┐ ┌──────────┐│
+│  │ Agent 1   │ │ Agent 2   │ │ Agent 3  │ │ Agent N  ││
+│  │           │ │           │ │          │ │          ││
+│  │ Model: A  │ │ Model: B  │ │ Model: C │ │ Model: D ││
+│  │ Tools: X  │ │ Tools: Y  │ │ Tools: Z │ │ Tools: W ││
+│  │ RAG: R1   │ │ RAG: R2   │ │ RAG: R3  │ │ RAG: R4  ││
+│  └───────────┘ └───────────┘ └──────────┘ └──────────┘│
+│         │            │            │              │      │
+│         └────────────┴────────────┴──────────────┘      │
+│                      │                                   │
+│                      ▼                                   │
+│         ┌────────────────────────┐                      │
+│         │    LLM Backend Pool    │                      │
+│         │  (Multiple Providers)  │                      │
+│         └────────────────────────┘                      │
+└─────────────────────────────────────────────────────────┘
+```
+
+=== 3.2 Class Design
+
+```python
+from typing import Dict, List, Optional, Any
+from dataclasses import dataclass
+from abc import ABC, abstractmethod
+
+@dataclass
+class AgentConfig:
+    """Configuration for an agent"""
+    name: str
+    description: str
+    models: Dict[str, str]  # primary, fallback, etc.
+    system_prompt: str
+    tools: List[str]
+    rag_collections: Optional[List[str]] = None
+    parameters: Optional[Dict[str, Any]] = None
+    constraints: Optional[Dict[str, Any]] = None
+    persona: Optional[Dict[str, Any]] = None
+
+class Agent:
+    """Represents a customized prompt agent"""
+    
+    def __init__(self, config: AgentConfig, backend_pool, tool_registry, rag_system):
+        self.config = config
+        self.name = config.name
+        self.backend_pool = backend_pool
+        self.tool_registry = tool_registry
+        self.rag_system = rag_system
+        
+        # Stats
+        self.request_count = 0
+        self.success_count = 0
+        self.total_tokens = 0
+    
+    async def execute(
+        self,
+        message: str,
+        conversation_id: Optional[str] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Execute prompt with this agent's configuration"""
+        
+        # Get primary model backend
+        backend = self.backend_pool.get(self.config.models['primary'])
+        
+        # Build context with agent's system prompt
+        messages = [
+            {'role': 'system', 'content': self.config.system_prompt},
+            {'role': 'user', 'content': message}
+        ]
+        
+        # Execute with agent's tools
+        response = await self._execute_with_tools(
+            backend,
+            messages,
+            tools=self.config.tools
+        )
+        
+        self.request_count += 1
+        self.success_count += 1
+        
+        return response
+    
+    def get_capabilities(self) -> Dict[str, Any]:
+        """Return agent capabilities metadata"""
+        return {
+            'name': self.name,
+            'description': self.config.description,
+            'tools': self.config.tools,
+            'rag_collections': self.config.rag_collections,
+            'models': self.config.models
+        }
+
+class AgentRegistry:
+    """Manages multiple agent instances"""
+    
+    def __init__(self):
+        self.agents: Dict[str, Agent] = {}
+        self.default_agent: Optional[str] = None
+    
+    def register(self, agent: Agent):
+        """Register a new agent"""
+        self.agents[agent.name] = agent
+        
+        if self.default_agent is None:
+            self.default_agent = agent.name
+    
+    def get(self, name: str) -> Optional[Agent]:
+        """Get agent by name"""
+        return self.agents.get(name)
+    
+    def list(self) -> List[str]:
+        """List all agent names"""
+        return list(self.agents.keys())
+    
+    def get_capabilities(self) -> Dict[str, Any]:
+        """Get capabilities of all agents"""
+        return {
+            name: agent.get_capabilities()
+            for name, agent in self.agents.items()
+        }
+
+class AgentOrchestrator:
+    """Meta-agent for task delegation and routing"""
+    
+    def __init__(self, registry: AgentRegistry, router_backend):
+        self.registry = registry
+        self.router_backend = router_backend
+    
+    async def route(self, message: str) -> str:
+        """Determine which agent should handle the request"""
+        
+        # Get all agent capabilities
+        capabilities = self.registry.get_capabilities()
+        
+        # Use LLM to decide routing
+        routing_prompt = f"""
+        Given the following user request and available agents, 
+        determine which agent is best suited to handle this request.
+        
+        User Request: {message}
+        
+        Available Agents:
+        {self._format_capabilities(capabilities)}
+        
+        Respond with only the agent name.
+        """
+        
+        agent_name = await self.router_backend.complete(routing_prompt)
+        return agent_name.strip()
+    
+    async def collaborate(
+        self,
+        tasks: List[tuple[str, str]]  # (agent_name, task)
+    ) -> Dict[str, Any]:
+        """Execute multiple tasks with different agents"""
+        
+        results = {}
+        
+        for agent_name, task in tasks:
+            agent = self.registry.get(agent_name)
+            if agent:
+                result = await agent.execute(task)
+                results[agent_name] = result
+        
+        return results
+
+class MultiModelComparator:
+    """Compare responses from multiple models"""
+    
+    def __init__(self, backend_pool):
+        self.backend_pool = backend_pool
+    
+    async def compare(
+        self,
+        models: List[str],
+        prompt: str
+    ) -> Dict[str, Any]:
+        """Get responses from multiple models"""
+        
+        import asyncio
+        
+        tasks = []
+        for model_name in models:
+            backend = self.backend_pool.get(model_name)
+            task = backend.complete(prompt)
+            tasks.append((model_name, task))
+        
+        # Execute in parallel
+        results = {}
+        for model_name, task in tasks:
+            try:
+                response = await task
+                results[model_name] = {
+                    'response': response,
+                    'success': True
+                }
+            except Exception as e:
+                results[model_name] = {
+                    'error': str(e),
+                    'success': False
+                }
+        
+        return results
+```
+
+=== 3.3 Configuration Schema
+
+```yaml
+# config.yaml
+agents:
+  # Research Assistant
+  - name: "research_assistant"
+    description: "Analyze academic papers and research"
+    enabled: true
+    
+    models:
+      primary: "ollama:mistral"
+      fallback:
+        - "ollama:llama2"
+        - "openai:gpt-3.5-turbo"
+    
+    system_prompt: |
+      You are an academic research assistant. Your role is to help 
+      analyze research papers, extract key findings, and provide 
+      evidence-based information. Always cite your sources.
+    
+    tools:
+      - document_rag
+      - web_search
+      - citation_formatter
+      - calculator
+    
+    rag:
+      collections:
+        - research_papers
+        - academic_journals
+      k: 10
+      min_confidence: 0.7
+    
+    parameters:
+      temperature: 0.3
+      max_tokens: 2000
+      top_p: 0.9
+    
+    constraints:
+      max_requests_per_hour: 100
+      max_cost_per_day: 5.00
+  
+  # Code Expert
+  - name: "code_expert"
+    description: "Software development and debugging"
+    enabled: true
+    
+    models:
+      primary: "ollama:codellama"
+      fallback:
+        - "anthropic:claude-3-sonnet"
+    
+    system_prompt: |
+      You are an expert software engineer. Help with code writing,
+      debugging, and best practices. Provide clear explanations.
+    
+    tools:
+      - code_execution
+      - file_operations
+      - git_operations
+      - web_search
+    
+    parameters:
+      temperature: 0.2
+      max_tokens: 4000
+    
+    sandbox:
+      enabled: true
+      timeout: 30
+      max_memory_mb: 512
+  
+  # Creative Writer
+  - name: "creative_writer"
+    description: "Creative content generation"
+    enabled: true
+    
+    models:
+      primary: "openai:gpt-4-turbo"
+      fallback:
+        - "anthropic:claude-3-opus"
+    
+    system_prompt: |
+      You are a creative writer. Help craft engaging stories,
+      articles, and creative content with vivid descriptions.
+    
+    tools:
+      - web_search
+      - thesaurus
+      - grammar_check
+    
+    parameters:
+      temperature: 0.9
+      max_tokens: 3000
+      top_p: 0.95
+  
+  # Orchestrator
+  - name: "orchestrator"
+    description: "Routes tasks to specialized agents"
+    enabled: true
+    
+    models:
+      primary: "openai:gpt-4"
+    
+    system_prompt: |
+      You are a meta-agent. Analyze user requests and route them
+      to the most appropriate specialized agent. You can also
+      break complex tasks into subtasks for multiple agents.
+    
+    tools:
+      - agent_delegation
+    
+    can_delegate_to:
+      - research_assistant
+      - code_expert
+      - creative_writer
+
+# Agent routing
+routing:
+  strategy: "llm_based"  # keyword, semantic, llm_based, learned
+  default_agent: "orchestrator"
+  auto_route: true
+```
+
+== 4. Usage Examples
+
+=== 4.1 CLI Usage
+
+```bash
+# List available agents
+agent list-agents
+
+# Output:
+# Available Agents:
+# - research_assistant: Analyze academic papers and research
+# - code_expert: Software development and debugging
+# - creative_writer: Creative content generation
+# - orchestrator: Routes tasks to specialized agents (default)
+
+# Use specific agent
+agent chat --agent research_assistant "Analyze this paper.pdf"
+
+# Let orchestrator decide
+agent chat "Write a blog post about AI with code examples"
+# → Orchestrator routes to creative_writer + code_expert
+
+# Compare multiple models
+agent chat --compare "mistral,gpt-4,claude" "Explain recursion"
+
+# Switch agent mid-conversation
+> /agent code_expert
+> Help me debug this Python function
+
+# View agent stats
+agent stats
+
+# Create new agent from template
+agent create-agent my_agent --template research_assistant
+```
+
+=== 4.2 API Usage
+
+```python
+from local_prompt_agent import Agent, AgentRegistry, AgentOrchestrator
+
+# Initialize system
+registry = AgentRegistry()
+
+# Load agents from config
+registry.load_from_file("config.yaml")
+
+# Use specific agent
+research_agent = registry.get("research_assistant")
+response = await research_agent.execute(
+    "What are the latest developments in quantum computing?"
+)
+
+# Use orchestrator for complex task
+orchestrator = AgentOrchestrator(registry, router_backend)
+
+# Automatic routing
+agent_name = await orchestrator.route(
+    "Debug this Python code and explain the algorithm"
+)
+print(f"Routing to: {agent_name}")
+
+# Collaboration
+results = await orchestrator.collaborate([
+    ("research_assistant", "Find information about microservices"),
+    ("creative_writer", "Write engaging introduction"),
+    ("code_expert", "Generate example code"),
+])
+
+# Multi-model comparison
+comparator = MultiModelComparator(backend_pool)
+comparison = await comparator.compare(
+    models=["mistral", "gpt-4", "claude"],
+    prompt="Explain machine learning to a 10-year-old"
+)
+
+for model, result in comparison.items():
+    print(f"\n{model}:")
+    print(result['response'])
+```
+
+=== 4.3 Configuration API
+
+```python
+# Programmatically create agent
+from local_prompt_agent import AgentConfig, Agent
+
+config = AgentConfig(
+    name="data_analyst",
+    description="Statistical analysis and data insights",
+    models={
+        "primary": "ollama:mistral",
+        "fallback": "openai:gpt-4"
+    },
+    system_prompt="You are a data analyst...",
+    tools=["calculator", "python_execution", "data_visualization"],
+    parameters={"temperature": 0.1, "max_tokens": 2000}
+)
+
+agent = Agent(config, backend_pool, tool_registry, rag_system)
+registry.register(agent)
+
+# Hot-reload agent configuration
+registry.reload_agent("data_analyst")
+
+# Update agent at runtime
+registry.update_agent("data_analyst", {
+    "parameters": {"temperature": 0.2}
+})
+```
+
+== 5. Implementation Plan
+
+=== Phase 1: Core Multi-Agent Support (Week 1-2)
+* Implement `AgentConfig` and `Agent` classes
+* Implement `AgentRegistry`
+* Add agent configuration loading
+* Update CLI to support `--agent` flag
+* Basic agent switching
+
+=== Phase 2: Agent Routing (Week 3)
+* Implement `AgentOrchestrator`
+* Add keyword-based routing
+* Add LLM-based routing
+* Add agent capability discovery
+
+=== Phase 3: Advanced Features (Week 4)
+* Multi-model comparison
+* Agent collaboration
+* Agent handoff
+* Performance metrics
+
+=== Phase 4: Polish and Testing (Week 5)
+* Comprehensive testing
+* Documentation
+* Example agent configurations
+* Performance optimization
+
+== 6. Configuration Migration
+
+For existing users, the system remains backward compatible:
+
+```yaml
+# Old configuration (still works)
+backend:
+  type: ollama
+  model: llama2
+
+# Automatically creates default agent
+# Equivalent to:
+agents:
+  - name: "default"
+    models:
+      primary: "ollama:llama2"
+    tools: [all]
+    system_prompt: ""
+```
+
+== 7. Benefits
+
+✅ **Flexibility**: Different agents for different tasks
+✅ **Model Optimization**: Use best model for each task
+✅ **Cost Control**: Cheaper models for simple tasks
+✅ **Specialization**: Agents with focused expertise
+✅ **Collaboration**: Complex tasks split across agents
+✅ **Comparison**: Evaluate multiple models
+✅ **Extensibility**: Easy to add new agents
+✅ **User Experience**: Better task-appropriate responses
+
+== 8. Future Enhancements
+
+* **Agent Learning**: Agents improve from user feedback
+* **Dynamic Tool Assignment**: Agents request tools as needed
+* **Agent Marketplace**: Share agent configurations
+* **Visual Agent Builder**: GUI for creating agents
+* **Agent Analytics**: Detailed performance insights
+* **Agent Versioning**: Track agent configuration changes
+* **A/B Testing**: Compare agent variations
+
+---
+
+*END OF ENHANCEMENT DOCUMENT*
+
+*Version: {version}*
+*Last Updated: {date}*

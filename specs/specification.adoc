@@ -1,0 +1,4629 @@
+= Local Prompt Agent - Technical Specification
+:toc: left
+:toclevels: 4
+:sectnums:
+:icons: font
+:source-highlighter: rouge
+:version: 1.0.0
+:date: {docdate}
+:author: Patrick Cheung
+
+== Document Information
+
+[cols="1,3"]
+|===
+|Version |{version}
+|Date |{date}
+|Author |{author}
+|Status |Draft
+|===
+
+== 1. Overview
+
+=== 1.1 Purpose
+The Local Prompt Agent is a sophisticated, locally-hosted intelligent agent system designed to manage, optimize, and execute AI prompts against local or remote Large Language Models (LLMs). The system provides a privacy-focused, cost-effective alternative to cloud-based AI services while offering advanced prompt engineering capabilities, conversation management, and extensibility.
+
+=== 1.2 Scope
+This specification defines the architecture, functional requirements, non-functional requirements, and implementation guidelines for building a local prompt agent that can:
+
+* Manage and execute prompts against multiple LLM backends
+* Maintain conversation context and history
+* Provide prompt templating and optimization
+* Handle multi-step reasoning and task decomposition
+* Offer extensibility through plugins and tools
+* Ensure data privacy and security by keeping all processing local
+
+=== 1.3 Target Audience
+* Developers implementing the Local Prompt Agent
+* System architects designing integration patterns
+* Quality assurance teams creating test plans
+* Technical stakeholders evaluating the solution
+
+=== 1.4 Definitions and Acronyms
+
+[cols="1,3"]
+|===
+|Term |Definition
+
+|LLM |Large Language Model
+|Prompt |Input text or instruction given to an LLM
+|Context Window |The maximum number of tokens an LLM can process at once
+|Token |The basic unit of text processing in LLMs (roughly 0.75 words)
+|Agent |An autonomous system that can perform tasks and make decisions
+|Tool |External capability that an agent can invoke (e.g., calculator, web search)
+|RAG |Retrieval-Augmented Generation - enhancing prompts with retrieved information
+|Embedding |Vector representation of text for semantic search
+|===
+
+== 2. Executive Summary
+
+The Local Prompt Agent is a powerful, privacy-preserving system that enables users to interact with AI models locally. Unlike cloud-based solutions, all data processing occurs on the user's machine, ensuring complete data sovereignty.
+
+*Key Features:*
+
+* *Multi-Backend Support*: Compatible with various LLM providers (Ollama, llama.cpp, LocalAI, OpenAI-compatible APIs)
+* *Conversation Management*: Maintains context across multiple interactions with configurable memory strategies
+* *Prompt Engineering*: Built-in templates, optimization, and chaining capabilities
+* *Tool Integration*: Extensible architecture for adding custom tools and functions
+* *Performance Optimization*: Intelligent caching, batching, and resource management
+* *Privacy-First Design*: All data remains local with optional encrypted storage
+
+*Use Cases:*
+
+* Personal AI assistant for productivity tasks
+* Code generation and review
+* Document analysis and summarization
+* Research and information synthesis
+* Custom AI workflows and automation
+
+== 3. Functional Requirements
+
+=== 3.1 Core Agent Capabilities
+
+==== FR-1.1: LLM Backend Management
+[cols="1,3"]
+|===
+|ID |FR-1.1
+|Priority |High
+|Description |The system SHALL support multiple LLM backend providers
+|===
+
+*Details:*
+
+* Support for Ollama (local models)
+* Support for llama.cpp (GGUF models)
+* Support for OpenAI-compatible API endpoints
+* Support for LocalAI
+* Ability to configure multiple backends simultaneously
+* Automatic backend health checking and failover
+
+==== FR-1.2: Prompt Execution
+[cols="1,3"]
+|===
+|ID |FR-1.2
+|Priority |High
+|Description |The system SHALL execute prompts against configured LLM backends
+|===
+
+*Details:*
+
+* Synchronous prompt execution with streaming support
+* Asynchronous batch processing
+* Configurable parameters (temperature, top_p, max_tokens, etc.)
+* Support for system prompts, user prompts, and assistant responses
+* Token usage tracking and reporting
+
+==== FR-1.3: Conversation Context Management
+[cols="1,3"]
+|===
+|ID |FR-1.3
+|Priority |High
+|Description |The system SHALL maintain conversation context across multiple interactions
+|===
+
+*Details:*
+
+* Support for multi-turn conversations
+* Configurable context window management strategies:
+  ** Fixed window (keep last N messages)
+  ** Sliding window with summarization
+  ** Semantic relevance filtering
+* Conversation persistence and restoration
+* Multiple concurrent conversation sessions
+
+=== 3.2 Prompt Engineering Features
+
+==== FR-2.1: Prompt Templates
+[cols="1,3"]
+|===
+|ID |FR-2.1
+|Priority |Medium
+|Description |The system SHALL support parameterized prompt templates
+|===
+
+*Details:*
+
+* Template definition with variable placeholders
+* Template library management (create, read, update, delete)
+* Variable substitution with validation
+* Template versioning and inheritance
+* Built-in template collection for common tasks
+
+==== FR-2.2: Prompt Chaining
+[cols="1,3"]
+|===
+|ID |FR-2.2
+|Priority |Medium
+|Description |The system SHALL support sequential and conditional prompt execution
+|===
+
+*Details:*
+
+* Define multi-step prompt workflows
+* Pass outputs from one prompt as inputs to another
+* Conditional branching based on response content
+* Parallel prompt execution for independent tasks
+* Error handling and retry logic in chains
+
+==== FR-2.3: Prompt Optimization
+[cols="1,3"]
+|===
+|ID |FR-2.3
+|Priority |Low
+|Description |The system SHOULD provide prompt optimization suggestions
+|===
+
+*Details:*
+
+* Analyze prompts for clarity and effectiveness
+* Suggest improvements based on best practices
+* Token count optimization
+* Format standardization
+
+=== 3.3 Tool and Function Integration
+
+==== FR-3.1: Tool Definition
+[cols="1,3"]
+|===
+|ID |FR-3.1
+|Priority |High
+|Description |The system SHALL support defining and registering custom tools
+|===
+
+*Details:*
+
+* JSON schema-based tool definition
+* Tool parameter validation
+* Tool description for LLM understanding
+* Tool versioning
+
+==== FR-3.2: Tool Execution
+[cols="1,3"]
+|===
+|ID |FR-3.2
+|Priority |High
+|Description |The system SHALL execute tools based on LLM function calling
+|===
+
+*Details:*
+
+* Parse function call requests from LLM responses
+* Execute appropriate tool with provided parameters
+* Return tool results to LLM for continued processing
+* Support for synchronous and asynchronous tools
+* Tool execution sandboxing for security
+
+==== FR-3.3: Built-in Tools
+[cols="1,3"]
+|===
+|ID |FR-3.3
+|Priority |Medium
+|Description |The system SHOULD include commonly used built-in tools
+|===
+
+*Built-in tools to include:*
+
+* File operations (read, write, search)
+* Document processing (PDF, DOCX, TXT, Markdown)
+* Web search and scraping
+* Calculator and math operations
+* Code execution (sandboxed)
+* Date/time operations
+* Data transformation (JSON, CSV, XML, etc.)
+
+=== 3.4 Storage and Persistence
+
+==== FR-4.1: Conversation History
+[cols="1,3"]
+|===
+|ID |FR-4.1
+|Priority |High
+|Description |The system SHALL persist conversation history
+|===
+
+*Details:*
+
+* Store conversations in local database
+* Support for full-text search across conversations
+* Conversation export (JSON, Markdown)
+* Conversation import for migration
+* Automatic cleanup of old conversations (configurable retention)
+
+==== FR-4.2: Configuration Management
+[cols="1,3"]
+|===
+|ID |FR-4.2
+|Priority |High
+|Description |The system SHALL manage configuration persistently
+|===
+
+*Details:*
+
+* YAML or JSON configuration files
+* Environment variable support
+* Configuration validation on startup
+* Hot-reload for non-critical settings
+
+==== FR-4.3: Cache Management
+[cols="1,3"]
+|===
+|ID |FR-4.3
+|Priority |Medium
+|Description |The system SHOULD cache prompt responses for reuse
+|===
+
+*Details:*
+
+* Semantic caching (similar prompts)
+* Exact match caching
+* Configurable TTL (time-to-live)
+* Cache invalidation strategies
+* Cache size limits
+
+=== 3.5 User Interface
+
+==== FR-5.1: Command-Line Interface
+[cols="1,3"]
+|===
+|ID |FR-5.1
+|Priority |High
+|Description |The system SHALL provide a rich command-line interface
+|===
+
+*Details:*
+
+* Interactive REPL mode
+* Single-command execution mode
+* Command history and auto-completion
+* Syntax highlighting for code blocks
+* Progress indicators for long-running operations
+
+==== FR-5.2: REST API
+[cols="1,3"]
+|===
+|ID |FR-5.2
+|Priority |High
+|Description |The system SHALL expose a REST API for programmatic access
+|===
+
+*Endpoints to include:*
+
+* `POST /api/v1/chat/completions` - Execute prompt
+* `GET /api/v1/conversations` - List conversations
+* `POST /api/v1/conversations` - Create conversation
+* `GET /api/v1/conversations/{id}` - Get conversation details
+* `DELETE /api/v1/conversations/{id}` - Delete conversation
+* `POST /api/v1/tools/execute` - Execute tool directly
+* `GET /api/v1/models` - List available models
+* `GET /api/v1/health` - Health check
+
+==== FR-5.3: Web Interface (Optional)
+[cols="1,3"]
+|===
+|ID |FR-5.3
+|Priority |Low
+|Description |The system MAY provide a web-based user interface
+|===
+
+*Features:*
+
+* Chat interface similar to ChatGPT
+* Conversation management
+* Settings configuration
+* Tool management
+* Usage statistics dashboard
+
+=== 3.6 Document Processing and RAG
+
+==== FR-6.1: Document Reading and Extraction
+[cols="1,3"]
+|===
+|ID |FR-6.1
+|Priority |High
+|Description |The system SHALL support reading and extracting content from various document formats
+|===
+
+*Supported formats:*
+
+* PDF documents (text-based and OCR)
+* Microsoft Word (DOCX)
+* Plain text (TXT, MD)
+* HTML documents
+* Rich Text Format (RTF)
+* CSV and spreadsheet data
+
+*Extraction capabilities:*
+
+* Plain text extraction with layout preservation
+* Table extraction and structured data parsing
+* Metadata extraction (author, creation date, page count)
+* Image extraction from documents
+* Page-level and section-level granular access
+* Selective page range extraction
+
+==== FR-6.2: Optical Character Recognition (OCR)
+[cols="1,3"]
+|===
+|ID |FR-6.2
+|Priority |Medium
+|Description |The system SHOULD support OCR for scanned documents and images
+|===
+
+*Details:*
+
+* OCR engine integration (Tesseract or cloud-based alternatives)
+* Language detection and multi-language support
+* Confidence scoring for extracted text
+* Preprocessing for better OCR accuracy (deskewing, noise reduction)
+* PDF with embedded images OCR processing
+
+==== FR-6.3: Document Chunking and Preprocessing
+[cols="1,3"]
+|===
+|ID |FR-6.3
+|Priority |High
+|Description |The system SHALL intelligently chunk documents for processing
+|===
+
+*Chunking strategies:*
+
+* Fixed-size chunking with configurable overlap
+* Semantic chunking based on paragraphs/sections
+* Recursive chunking for hierarchical documents
+* Sentence-boundary aware splitting
+* Configurable chunk size based on token limits
+
+*Preprocessing capabilities:*
+
+* Remove headers, footers, page numbers
+* Clean formatting artifacts
+* Normalize whitespace
+* Extract and preserve document structure
+* Handle multi-column layouts
+
+==== FR-6.4: Vector Embeddings and Indexing
+[cols="1,3"]
+|===
+|ID |FR-6.4
+|Priority |High
+|Description |The system SHALL create and manage vector embeddings for semantic search
+|===
+
+*Details:*
+
+* Generate embeddings for document chunks using local models
+* Support for multiple embedding models (sentence-transformers, OpenAI, etc.)
+* Efficient vector storage (in-memory or persistent)
+* Batch embedding generation for performance
+* Embedding cache to avoid recomputation
+* Metadata association with embeddings (source, page, timestamp)
+
+*Supported embedding models:*
+
+* `all-MiniLM-L6-v2` (lightweight, fast)
+* `all-mpnet-base-v2` (balanced performance)
+* `text-embedding-ada-002` (via OpenAI API)
+* `instructor-xl` (instruction-tuned embeddings)
+* Custom embedding models via plugin architecture
+
+==== FR-6.5: Vector Storage and Retrieval
+[cols="1,3"]
+|===
+|ID |FR-6.5
+|Priority |High
+|Description |The system SHALL provide efficient vector storage and similarity search
+|===
+
+*Storage backends:*
+
+* ChromaDB (local, lightweight)
+* FAISS (high-performance similarity search)
+* Qdrant (optional, for advanced use cases)
+* In-memory vector store (for small datasets)
+
+*Retrieval capabilities:*
+
+* Semantic similarity search (cosine, dot product, euclidean)
+* Hybrid search (combining keyword and semantic)
+* Filtered search (by metadata, date, source)
+* Top-K retrieval with configurable K
+* Maximum Marginal Relevance (MMR) for diversity
+* Reranking for improved relevance
+
+==== FR-6.6: RAG (Retrieval-Augmented Generation)
+[cols="1,3"]
+|===
+|ID |FR-6.6
+|Priority |High
+|Description |The system SHALL implement RAG for enhanced question answering over documents
+|===
+
+*RAG workflow:*
+
+1. **Document Ingestion**
+   * Load and parse documents
+   * Chunk into manageable pieces
+   * Generate embeddings
+   * Store in vector database
+
+2. **Query Processing**
+   * Embed user query
+   * Retrieve relevant chunks from vector store
+   * Rank and filter results
+   * Select top-K most relevant chunks
+
+3. **Context Assembly**
+   * Combine retrieved chunks into context
+   * Handle context window limitations
+   * Maintain source attribution
+   * Format context for LLM consumption
+
+4. **Response Generation**
+   * Generate prompt with retrieved context
+   * Execute LLM with augmented prompt
+   * Include citations and sources in response
+   * Track which documents were used
+
+*RAG modes:*
+
+* **Simple RAG**: Direct retrieval and generation
+* **Conversational RAG**: Maintain conversation history with RAG
+* **Multi-query RAG**: Generate multiple query variations for better recall
+* **Hybrid RAG**: Combine keyword search with semantic search
+* **Agentic RAG**: Agent decides when to retrieve information
+
+==== FR-6.7: Document Index Management
+[cols="1,3"]
+|===
+|ID |FR-6.7
+|Priority |Medium
+|Description |The system SHALL manage document indices and collections
+|===
+
+*Management capabilities:*
+
+* Create named document collections
+* Add/remove documents from collections
+* Update existing document indices
+* Delete collections and clean up storage
+* Export/import indices for backup
+* Collection metadata and statistics
+
+*Index operations:*
+
+* Incremental indexing (add new documents without rebuilding)
+* Batch indexing for efficiency
+* Background indexing to avoid blocking
+* Index optimization and compaction
+* Duplicate detection and handling
+
+==== FR-6.8: Multi-Document Operations
+[cols="1,3"]
+|===
+|ID |FR-6.8
+|Priority |Medium
+|Description |The system SHOULD support operations across multiple documents
+|===
+
+*Capabilities:*
+
+* Compare multiple documents
+* Summarize document collections
+* Extract common themes across documents
+* Cross-reference and citation tracking
+* Temporal analysis of document series
+* Aggregate statistics and insights
+
+==== FR-6.9: Document Cache and Optimization
+[cols="1,3"]
+|===
+|ID |FR-6.9
+|Priority |Medium
+|Description |The system SHOULD optimize document processing for performance
+|===
+
+*Optimization strategies:*
+
+* Cache extracted text to avoid reprocessing
+* Cache embeddings with document hash verification
+* Lazy loading of document content
+* Progressive indexing (index while user works)
+* Memory-mapped file access for large documents
+* Parallel processing of document batches
+
+*Cache management:*
+
+* Configurable cache size limits
+* LRU eviction for document cache
+* Cache invalidation on document updates
+* Persistent cache across sessions
+
+==== FR-6.10: Document Search and Query
+[cols="1,3"]
+|===
+|ID |FR-6.10
+|Priority |High
+|Description |The system SHALL provide comprehensive document search capabilities
+|===
+
+*Search types:*
+
+* Natural language questions
+* Keyword search
+* Semantic similarity search
+* Hybrid search (keyword + semantic)
+* Filtered search by metadata
+
+*Query features:*
+
+* Query expansion and reformulation
+* Multi-hop reasoning over documents
+* Question decomposition for complex queries
+* Answer synthesis from multiple sources
+* Confidence scoring for answers
+
+*Response format:*
+
+* Direct answer with supporting evidence
+* Source citations (document, page, chunk)
+* Relevant excerpts highlighted
+* Confidence level indicator
+* Alternative interpretations if ambiguous
+
+== 4. Non-Functional Requirements
+
+=== 4.1 Performance
+
+==== NFR-1.1: Response Time
+[cols="1,3"]
+|===
+|ID |NFR-1.1
+|Priority |High
+|Description |The system SHALL provide responsive interactions
+|===
+
+*Targets:*
+
+* API request processing (excluding LLM generation): < 100ms (p95)
+* First token latency: < 500ms (p95)
+* Streaming response start: < 200ms
+* Tool execution overhead: < 50ms (p95)
+
+==== NFR-1.2: Throughput
+[cols="1,3"]
+|===
+|ID |NFR-1.2
+|Priority |Medium
+|Description |The system SHALL handle concurrent requests efficiently
+|===
+
+*Targets:*
+
+* Support at least 10 concurrent conversations
+* Support at least 50 requests per second (API mode)
+* Batch processing: minimum 100 prompts per batch
+
+==== NFR-1.3: Resource Utilization
+[cols="1,3"]
+|===
+|ID |NFR-1.3
+|Priority |High
+|Description |The system SHALL optimize resource consumption
+|===
+
+*Targets:*
+
+* Memory footprint: < 500MB (idle state, excluding LLM)
+* CPU usage: < 10% (idle state)
+* Disk I/O: Efficient use with caching
+* Graceful degradation under resource constraints
+
+=== 4.2 Scalability
+
+==== NFR-2.1: Conversation Scalability
+[cols="1,3"]
+|===
+|ID |NFR-2.1
+|Priority |Medium
+|Description |The system SHALL handle large conversation histories
+|===
+
+*Targets:*
+
+* Support conversations with 1000+ messages
+* Handle context windows up to 128K tokens
+* Database support for 100,000+ stored conversations
+
+==== NFR-2.2: Model Scalability
+[cols="1,3"]
+|===
+|ID |NFR-2.2
+|Priority |Medium
+|Description |The system SHALL support multiple LLM configurations
+|===
+
+*Targets:*
+
+* Support at least 10 different model configurations
+* Allow dynamic model loading/unloading
+* Model-specific optimization profiles
+
+=== 4.3 Reliability
+
+==== NFR-3.1: Availability
+[cols="1,3"]
+|===
+|ID |NFR-3.1
+|Priority |High
+|Description |The system SHALL be highly available for local use
+|===
+
+*Targets:*
+
+* 99.9% uptime (excluding maintenance windows)
+* Automatic recovery from transient failures
+* Graceful handling of backend unavailability
+
+==== NFR-3.2: Data Integrity
+[cols="1,3"]
+|===
+|ID |NFR-3.2
+|Priority |High
+|Description |The system SHALL ensure data integrity
+|===
+
+*Measures:*
+
+* ACID-compliant database transactions
+* Automatic backup of conversation data
+* Data validation on all inputs
+* Checksums for cached data
+
+==== NFR-3.3: Error Recovery
+[cols="1,3"]
+|===
+|ID |NFR-3.3
+|Priority |High
+|Description |The system SHALL recover gracefully from errors
+|===
+
+*Capabilities:*
+
+* Automatic retry with exponential backoff
+* Circuit breaker pattern for failing backends
+* Conversation state preservation on crashes
+* Detailed error logging
+
+=== 4.4 Security
+
+==== NFR-4.1: Data Privacy
+[cols="1,3"]
+|===
+|ID |NFR-4.1
+|Priority |High
+|Description |The system SHALL protect user data privacy
+|===
+
+*Measures:*
+
+* All data processing occurs locally
+* Optional encryption at rest for stored data
+* No telemetry or data transmission to external servers
+* Secure credential storage for API keys
+
+==== NFR-4.2: Access Control
+[cols="1,3"]
+|===
+|ID |NFR-4.2
+|Priority |Medium
+|Description |The system SHOULD implement access control
+|===
+
+*Features:*
+
+* API authentication (token-based)
+* Rate limiting per client
+* IP-based access restrictions (optional)
+* Role-based access control (admin, user, read-only)
+
+==== NFR-4.3: Tool Security
+[cols="1,3"]
+|===
+|ID |NFR-4.3
+|Priority |High
+|Description |The system SHALL execute tools securely
+|===
+
+*Measures:*
+
+* Sandboxed execution environment
+* Whitelist of allowed operations
+* Resource limits (CPU, memory, disk)
+* Audit logging of tool executions
+
+=== 4.5 Usability
+
+==== NFR-5.1: Documentation
+[cols="1,3"]
+|===
+|ID |NFR-5.1
+|Priority |High
+|Description |The system SHALL be well-documented
+|===
+
+*Requirements:*
+
+* Comprehensive README with quick start
+* API documentation (OpenAPI/Swagger)
+* Architecture documentation
+* Example configurations and use cases
+* Troubleshooting guide
+
+==== NFR-5.2: Configuration
+[cols="1,3"]
+|===
+|ID |NFR-5.2
+|Priority |High
+|Description |The system SHALL be easily configurable
+|===
+
+*Features:*
+
+* Sensible defaults for common use cases
+* Clear configuration parameter descriptions
+* Configuration validation with helpful error messages
+* Configuration templates for different scenarios
+
+==== NFR-5.3: Error Messages
+[cols="1,3"]
+|===
+|ID |NFR-5.3
+|Priority |Medium
+|Description |The system SHALL provide helpful error messages
+|===
+
+*Guidelines:*
+
+* Clear description of what went wrong
+* Suggestions for resolution
+* Relevant context information
+* Error codes for programmatic handling
+
+=== 4.6 Maintainability
+
+==== NFR-6.1: Code Quality
+[cols="1,3"]
+|===
+|ID |NFR-6.1
+|Priority |High
+|Description |The system SHALL maintain high code quality
+|===
+
+*Standards:*
+
+* Consistent coding style (enforced by linter)
+* Comprehensive inline documentation
+* Type safety (strong typing)
+* Test coverage > 80%
+* No critical security vulnerabilities
+
+==== NFR-6.2: Modularity
+[cols="1,3"]
+|===
+|ID |NFR-6.2
+|Priority |High
+|Description |The system SHALL be modular and extensible
+|===
+
+*Architecture:*
+
+* Clear separation of concerns
+* Plugin architecture for tools
+* Interface-based design
+* Minimal coupling between components
+
+==== NFR-6.3: Logging and Monitoring
+[cols="1,3"]
+|===
+|ID |NFR-6.3
+|Priority |Medium
+|Description |The system SHALL provide comprehensive logging
+|===
+
+*Features:*
+
+* Structured logging (JSON format)
+* Configurable log levels
+* Log rotation and retention
+* Performance metrics export (Prometheus format)
+* Distributed tracing support
+
+=== 4.7 Portability
+
+==== NFR-7.1: Cross-Platform Support
+[cols="1,3"]
+|===
+|ID |NFR-7.1
+|Priority |High
+|Description |The system SHALL run on multiple operating systems
+|===
+
+*Supported platforms:*
+
+* Linux (Ubuntu 20.04+, Debian 11+, Arch, Fedora)
+* macOS (11+)
+* Windows (10, 11)
+
+==== NFR-7.2: Deployment Options
+[cols="1,3"]
+|===
+|ID |NFR-7.2
+|Priority |Medium
+|Description |The system SHALL support multiple deployment methods
+|===
+
+*Options:*
+
+* Standalone binary
+* Docker container
+* Python package (pip install)
+* System service (systemd, launchd, Windows Service)
+
+== 5. Edge Cases and Error Scenarios
+
+=== 5.1 LLM Backend Failures
+
+==== EC-1.1: Backend Unavailable
+*Scenario:* Configured LLM backend is not responding or unreachable.
+
+*Handling:*
+
+1. Attempt connection with timeout (5 seconds)
+2. If failed, retry up to 3 times with exponential backoff
+3. If all retries fail, mark backend as unhealthy
+4. If alternate backends configured, failover automatically
+5. Return user-friendly error message with troubleshooting steps
+6. Log detailed error for debugging
+
+*Example Error Message:*
+```
+Failed to connect to LLM backend 'ollama' at http://localhost:11434
+Reason: Connection timeout after 5 seconds
+
+Possible solutions:
+1. Ensure Ollama is running: 'ollama serve'
+2. Check if the port is correct in configuration
+3. Verify firewall settings
+
+For more details, see logs at: ~/.local-prompt-agent/logs/error.log
+```
+
+==== EC-1.2: Model Not Found
+*Scenario:* Requested model is not available on the backend.
+
+*Handling:*
+
+1. Query backend for available models
+2. If requested model not in list, return error with suggestions
+3. Suggest similar models based on name matching
+4. Provide command to download model if applicable
+
+==== EC-1.3: Rate Limiting
+*Scenario:* Backend enforces rate limits (relevant for API-based backends).
+
+*Handling:*
+
+1. Parse rate limit headers (if available)
+2. Implement exponential backoff
+3. Queue requests if rate limit is temporary
+4. Inform user of rate limit status
+5. Provide option to continue when rate limit resets
+
+=== 5.2 Context Window Overflow
+
+==== EC-2.1: Message History Too Large
+*Scenario:* Conversation history exceeds model's context window.
+
+*Handling Strategies:*
+
+*Strategy 1: Truncation*
+1. Keep system prompt and last N messages
+2. Add notice about truncated history
+3. Warn user about loss of early context
+
+*Strategy 2: Summarization*
+1. Use LLM to summarize old messages
+2. Replace old messages with summary
+3. Maintain recent messages in full
+
+*Strategy 3: Semantic Filtering*
+1. Embed all messages as vectors
+2. Keep most semantically relevant messages
+3. Ensure conversation coherence
+
+*Implementation:*
+```
+IF token_count > (max_tokens * 0.9):
+    strategy = config.get('overflow_strategy', 'truncation')
+    
+    IF strategy == 'truncation':
+        messages = truncate_messages(messages, max_tokens)
+    ELIF strategy == 'summarization':
+        messages = summarize_old_messages(messages, max_tokens)
+    ELIF strategy == 'semantic':
+        messages = filter_by_relevance(messages, max_tokens, current_query)
+    
+    RETURN messages
+```
+
+==== EC-2.2: Single Message Too Large
+*Scenario:* A single user message exceeds context window.
+
+*Handling:*
+
+1. Detect oversized message before sending
+2. Offer to split message into chunks
+3. Process chunks sequentially or
+4. Reject with helpful error message suggesting alternatives (file processing, summarization)
+
+=== 5.3 Tool Execution Issues
+
+==== EC-3.1: Tool Execution Timeout
+*Scenario:* Tool execution exceeds configured timeout.
+
+*Handling:*
+
+1. Set timeout based on tool type (default: 30s)
+2. Monitor execution in separate thread
+3. If timeout exceeded, kill tool process
+4. Return timeout error to LLM with partial results (if any)
+5. Log timeout event with tool parameters
+
+==== EC-3.2: Tool Execution Failure
+*Scenario:* Tool encounters an error during execution.
+
+*Handling:*
+
+1. Catch all exceptions during tool execution
+2. Format error message for LLM understanding
+3. Include error type, message, and suggested fixes
+4. Allow LLM to decide next action (retry, alternative approach, abort)
+5. Log full stack trace for debugging
+
+*Example Tool Error Response:*
+```json
+{
+  "success": false,
+  "error": {
+    "type": "FileNotFoundError",
+    "message": "The file 'data.csv' does not exist",
+    "suggestions": [
+      "Check if the file path is correct",
+      "Verify the file exists in the current directory",
+      "Use the list_files tool to see available files"
+    ]
+  }
+}
+```
+
+==== EC-3.3: Infinite Tool Loop
+*Scenario:* LLM repeatedly calls the same tool without progress.
+
+*Handling:*
+
+1. Track tool call history within conversation
+2. Detect repeated patterns (same tool + similar params)
+3. After N repetitions (N=3), inject circuit breaker
+4. Provide feedback to LLM about detected loop
+5. Suggest alternative approaches
+
+=== 5.4 Resource Constraints
+
+==== EC-4.1: Out of Memory
+*Scenario:* System runs out of memory during processing.
+
+*Handling:*
+
+1. Monitor memory usage during operations
+2. Implement soft limits (e.g., 80% of available RAM)
+3. If approaching limit, trigger cleanup:
+   - Clear response cache
+   - Reduce conversation context
+   - Release unused resources
+4. If hard limit hit, gracefully fail with saved state
+5. Log memory metrics for analysis
+
+==== EC-4.2: Disk Space Exhausted
+*Scenario:* Storage is full, cannot write logs or data.
+
+*Handling:*
+
+1. Check available disk space on startup
+2. Monitor during operation
+3. If space low (<1GB), trigger cleanup:
+   - Rotate logs
+   - Clean old cache entries
+   - Archive old conversations
+4. Warn user about low space
+5. If critical, operate in memory-only mode
+
+==== EC-4.3: CPU Overload
+*Scenario:* System CPU usage is at maximum capacity.
+
+*Handling:*
+
+1. Implement request queue with max size
+2. Throttle incoming requests
+3. Prioritize interactive requests over batch
+4. Return 503 Service Unavailable with retry-after header
+5. Scale down non-critical operations (caching, logging)
+
+=== 5.5 Data Corruption and Loss
+
+==== EC-5.1: Database Corruption
+*Scenario:* Conversation database becomes corrupted.
+
+*Handling:*
+
+1. Detect corruption on startup (integrity check)
+2. Attempt automatic repair using DB tools
+3. If repair fails, restore from last backup
+4. If no backup, create new DB (loss of history)
+5. Alert user and provide recovery options
+6. Export salvageable data to JSON
+
+==== EC-5.2: Interrupted Conversation
+*Scenario:* System crashes mid-conversation.
+
+*Handling:*
+
+1. Implement write-ahead logging for conversations
+2. On restart, detect incomplete conversations
+3. Offer to restore or discard interrupted conversation
+4. Mark restored conversations with recovery timestamp
+5. Validate restored data integrity
+
+==== EC-5.3: Configuration File Errors
+*Scenario:* Configuration file is invalid or corrupted.
+
+*Handling:*
+
+1. Validate configuration on load using JSON schema
+2. If invalid, show specific validation errors
+3. Attempt to use last known good configuration
+4. Fall back to default configuration
+5. Generate sample configuration file
+6. Prevent startup if critical settings missing
+
+=== 5.6 Network and Connectivity
+
+==== EC-6.1: Partial Network Failure
+*Scenario:* Network available but intermittent connectivity.
+
+*Handling:*
+
+1. Implement connection health checks
+2. Use exponential backoff for retries
+3. Maintain operation queue for failed requests
+4. Process queue when connectivity restored
+5. Provide offline mode for local-only features
+
+==== EC-6.2: Proxy and Firewall Issues
+*Scenario:* Network requests blocked by proxy or firewall.
+
+*Handling:*
+
+1. Support proxy configuration (HTTP_PROXY, HTTPS_PROXY)
+2. Detect proxy-related errors
+3. Provide troubleshooting guidance
+4. Option to disable network-dependent features
+5. Test connectivity to required endpoints on startup
+
+=== 5.7 Concurrent Access
+
+==== EC-7.1: Race Conditions
+*Scenario:* Multiple processes/threads access shared resources.
+
+*Handling:*
+
+1. Use database transactions for atomic operations
+2. Implement file locking for configuration files
+3. Use thread-safe data structures
+4. Employ mutex/semaphores for critical sections
+5. Test thoroughly with concurrent requests
+
+==== EC-7.2: Conversation Conflicts
+*Scenario:* Same conversation edited from multiple clients.
+
+*Handling:*
+
+1. Implement optimistic locking with version numbers
+2. Detect conflicts on write
+3. Offer conflict resolution strategies:
+   - Last write wins (with warning)
+   - Merge if possible
+   - Create conversation branch
+4. Notify all clients of updates (if websocket enabled)
+
+=== 5.8 Document Processing and RAG
+
+==== EC-8.1: Corrupted or Invalid Documents
+*Scenario:* Document file is corrupted, password-protected, or in an unsupported format.
+
+*Handling:*
+
+1. Detect file corruption during initial read attempt
+2. For password-protected PDFs:
+   - Prompt user for password
+   - Store password securely for future access
+   - If password unavailable, skip document and log warning
+3. For unsupported formats:
+   - Return clear error message with supported formats list
+   - Suggest conversion tools if applicable
+4. For partially corrupted documents:
+   - Extract readable content
+   - Mark document as "partially processed"
+   - Log specific pages or sections that failed
+5. Provide fallback to OCR if text extraction fails
+
+*Example Error Response:*
+```
+Error: Unable to read document 'report.pdf'
+Reason: Document is password protected
+
+Solutions:
+1. Provide password: agent unlock-doc report.pdf --password <password>
+2. Decrypt the PDF using: qpdf --decrypt report.pdf unlocked.pdf
+3. Skip this document and continue with others
+```
+
+==== EC-8.2: Very Large Documents
+*Scenario:* Document exceeds reasonable processing limits (>1000 pages or >100MB).
+
+*Handling:*
+
+1. Check document size before processing
+2. If size exceeds threshold:
+   - Warn user about processing time
+   - Offer to process in background
+   - Suggest page range selection
+3. Use streaming/chunked processing
+4. Implement progress tracking
+5. Allow cancellation of long-running operations
+6. Cache partial results to resume if interrupted
+
+*Processing strategies:*
+
+```
+IF document_size > size_threshold:
+    strategy = prompt_user_for_strategy()
+    
+    IF strategy == "selective":
+        pages = user_select_pages()
+        process_pages(document, pages)
+    
+    ELIF strategy == "background":
+        job_id = queue_background_processing(document)
+        notify_user_when_complete(job_id)
+    
+    ELIF strategy == "streaming":
+        FOR chunk IN stream_document(document):
+            process_chunk(chunk)
+            update_progress()
+            IF user_cancelled():
+                save_partial_results()
+                BREAK
+```
+
+==== EC-8.3: Context Window Overflow with RAG
+*Scenario:* Retrieved documents exceed LLM context window.
+
+*Handling:*
+
+1. Calculate total tokens for query + retrieved chunks
+2. If exceeds context window:
+   - Reduce number of retrieved chunks (K value)
+   - Summarize retrieved chunks before including
+   - Use map-reduce pattern for very large retrievals
+3. Prioritize most relevant chunks
+4. Implement MMR (Maximum Marginal Relevance) for diversity while staying within limits
+
+*Map-Reduce RAG Pattern:*
+
+```
+FUNCTION rag_with_context_limit(query, retrieved_chunks, max_tokens):
+    IF count_tokens(retrieved_chunks) <= max_tokens:
+        RETURN standard_rag(query, retrieved_chunks)
+    
+    # Map: Summarize each chunk separately
+    summaries = []
+    FOR chunk IN retrieved_chunks:
+        summary = llm.complete(f"Summarize: {chunk}", max_tokens=100)
+        summaries.append(summary)
+    
+    # Check if summaries fit
+    IF count_tokens(summaries) <= max_tokens:
+        RETURN llm.complete(f"Question: {query}\nContext: {summaries}")
+    
+    # Reduce: Combine summaries iteratively
+    final_summary = combine_summaries_iteratively(summaries, max_tokens)
+    RETURN llm.complete(f"Question: {query}\nContext: {final_summary}")
+```
+
+==== EC-8.4: Embedding Generation Failure
+*Scenario:* Embedding model unavailable or fails during document indexing.
+
+*Handling:*
+
+1. Detect embedding failure early
+2. For local embedding models:
+   - Check if model is downloaded
+   - Offer to download automatically
+   - Provide fallback to lighter model
+3. For API-based embeddings:
+   - Check network connectivity
+   - Implement retry with backoff
+   - Use local model as fallback
+4. Store failed chunks for retry
+5. Allow partial index creation
+
+*Recovery procedure:*
+
+```
+FUNCTION safe_embed_documents(documents):
+    successful = []
+    failed = []
+    
+    FOR doc IN documents:
+        TRY:
+            embedding = embedding_model.embed(doc)
+            successful.append((doc, embedding))
+        CATCH ModelError AS e:
+            IF is_retryable(e):
+                failed.append(doc)
+            ELSE:
+                log_error(f"Permanent failure for doc {doc.id}: {e}")
+    
+    # Retry failed with exponential backoff
+    IF failed:
+        sleep(5)
+        FOR doc IN failed:
+            TRY:
+                embedding = embedding_model.embed(doc)
+                successful.append((doc, embedding))
+            CATCH:
+                mark_for_manual_review(doc)
+    
+    RETURN successful
+```
+
+==== EC-8.5: Vector Store Corruption or Unavailability
+*Scenario:* Vector database becomes corrupted or unreachable.
+
+*Handling:*
+
+1. Detect vector store issues on startup or access
+2. Attempt automatic recovery:
+   - Rebuild index from source documents (if available)
+   - Restore from backup
+   - Use read-only mode if write operations failing
+3. Provide graceful degradation:
+   - Fall back to keyword search
+   - Use in-memory vector store temporarily
+4. Alert user and provide recovery options
+5. Prevent data loss by maintaining source documents separately
+
+==== EC-8.6: Poor Retrieval Quality
+*Scenario:* RAG system retrieves irrelevant chunks for user queries.
+
+*Handling:*
+
+1. Implement retrieval quality metrics:
+   - Track user feedback on relevance
+   - Monitor answer confidence scores
+   - Log queries with poor retrieval
+2. Auto-tune retrieval parameters:
+   - Adjust similarity thresholds
+   - Modify chunk sizes
+   - Change overlap amounts
+3. Provide manual override options:
+   - Allow user to specify documents
+   - Enable full-text search fallback
+   - Offer to show all retrieved chunks
+4. Suggest query reformulation
+5. Use query expansion techniques
+
+*Quality improvement loop:*
+
+```
+FUNCTION adaptive_retrieval(query, collection):
+    # Try standard retrieval
+    chunks = retrieve(query, collection, k=5)
+    confidence = estimate_confidence(chunks, query)
+    
+    IF confidence < threshold:
+        # Try query expansion
+        expanded_queries = expand_query(query)
+        all_chunks = []
+        FOR eq IN expanded_queries:
+            all_chunks.extend(retrieve(eq, collection, k=3))
+        
+        # Deduplicate and rerank
+        chunks = rerank_chunks(all_chunks, query)[:5]
+    
+    IF still_low_confidence(chunks):
+        # Fall back to hybrid search
+        chunks = hybrid_search(query, collection, k=5)
+    
+    RETURN chunks
+```
+
+==== EC-8.7: Document Update and Staleness
+*Scenario:* Source document is modified but index is not updated.
+
+*Handling:*
+
+1. Implement document change detection:
+   - Track file modification timestamps
+   - Calculate file hash for change detection
+   - Monitor watched directories
+2. Automatic re-indexing strategies:
+   - Periodic background refresh
+   - On-demand check before retrieval
+   - Real-time monitoring with file watchers
+3. Version management:
+   - Keep multiple document versions if needed
+   - Track which version was indexed
+   - Alert user to stale indices
+4. Incremental updates:
+   - Only re-index changed sections
+   - Update embeddings for modified chunks
+   - Maintain index consistency
+
+*Staleness detection:*
+
+```
+FUNCTION check_document_freshness(doc_id, index):
+    source_doc = get_source_document(doc_id)
+    indexed_doc = index.get_document_metadata(doc_id)
+    
+    IF source_doc.modified_time > indexed_doc.index_time:
+        log_warning(f"Document {doc_id} has been modified since indexing")
+        
+        IF auto_refresh_enabled():
+            reindex_document(doc_id)
+        ELSE:
+            notify_user(f"Document {doc_id} may be stale. Run: agent refresh-index {doc_id}")
+    
+    # Also check file hash for reliability
+    IF source_doc.hash != indexed_doc.hash:
+        RAISE DocumentModifiedError(doc_id)
+```
+
+==== EC-8.8: Multilingual and Special Characters
+*Scenario:* Documents contain non-English text or special characters that cause processing issues.
+
+*Handling:*
+
+1. Detect document language automatically
+2. Use appropriate tokenization for language
+3. Select compatible embedding models
+4. Handle Unicode properly throughout pipeline
+5. Support right-to-left text (Arabic, Hebrew)
+6. Preserve mathematical notation and formulas
+7. Handle mixed-language documents
+
+*Language detection and handling:*
+
+```
+FUNCTION process_multilingual_document(document):
+    # Detect languages
+    languages = detect_languages(document)
+    
+    IF len(languages) == 1:
+        # Single language document
+        config = get_language_config(languages[0])
+        RETURN process_with_config(document, config)
+    
+    ELSE:
+        # Mixed language document
+        IF "en" IN languages AND len(languages) == 2:
+            # Use multilingual model
+            config = get_config("multilingual")
+            RETURN process_with_config(document, config)
+        ELSE:
+            # Process sections separately
+            sections = segment_by_language(document, languages)
+            results = []
+            FOR section, lang IN sections:
+                config = get_language_config(lang)
+                results.append(process_with_config(section, config))
+            RETURN merge_results(results)
+```
+
+==== EC-8.9: OCR Quality Issues
+*Scenario:* OCR produces low-quality or incorrect text extraction.
+
+*Handling:*
+
+1. Assess OCR confidence scores
+2. If confidence low:
+   - Apply image preprocessing (deskew, denoise)
+   - Retry OCR with different settings
+   - Try multiple OCR engines and compare
+3. Flag low-confidence text for review
+4. Provide original images alongside text
+5. Allow manual correction of OCR errors
+6. Learn from corrections to improve future OCR
+
+*OCR quality assurance:*
+
+```
+FUNCTION ocr_with_quality_check(image_path):
+    # First attempt
+    result = ocr_engine.process(image_path)
+    
+    IF result.confidence < 0.7:
+        # Preprocess and retry
+        preprocessed = preprocess_image(image_path)
+        result = ocr_engine.process(preprocessed)
+    
+    IF result.confidence < 0.5:
+        # Try alternative engine
+        result_alt = alternative_ocr_engine.process(image_path)
+        
+        # Use better result
+        IF result_alt.confidence > result.confidence:
+            result = result_alt
+    
+    # Flag low confidence
+    IF result.confidence < 0.6:
+        result.warnings.append("Low OCR confidence - manual review recommended")
+    
+    RETURN result
+```
+
+==== EC-8.10: Memory Issues with Large Document Collections
+*Scenario:* Processing large document collections exhausts system memory.
+
+*Handling:*
+
+1. Implement streaming processing:
+   - Process one document at a time
+   - Clear memory after each document
+   - Use generators instead of lists
+2. Batch processing with memory limits:
+   - Monitor memory usage
+   - Adjust batch size dynamically
+   - Pause processing if memory high
+3. Use memory-efficient data structures
+4. Implement disk-based temporary storage
+5. Provide memory usage warnings
+
+*Memory-efficient batch processing:*
+
+```
+FUNCTION process_large_collection(document_paths, memory_limit_mb):
+    batch_size = 10
+    processed = 0
+    
+    WHILE processed < len(document_paths):
+        # Check memory
+        current_memory = get_memory_usage_mb()
+        
+        IF current_memory > memory_limit_mb * 0.8:
+            # Reduce batch size
+            batch_size = max(1, batch_size // 2)
+            log_warning(f"High memory usage, reducing batch size to {batch_size}")
+            
+            # Force garbage collection
+            gc.collect()
+            sleep(1)
+        
+        # Process batch
+        batch = document_paths[processed:processed + batch_size]
+        FOR doc_path IN batch:
+            WITH memory_efficient_mode():
+                process_document(doc_path)
+                gc.collect()  # Clean up immediately
+        
+        processed += batch_size
+        
+        # Increase batch size if memory allows
+        IF current_memory < memory_limit_mb * 0.5:
+            batch_size = min(50, batch_size * 2)
+```
+
+== 6. Pseudo Code
+
+=== 6.1 Core Agent Loop
+
+```
+CLASS LocalPromptAgent:
+    
+    CONSTRUCTOR(config):
+        self.config = load_and_validate_config(config)
+        self.llm_backend = initialize_backend(self.config.backend)
+        self.conversation_manager = ConversationManager(self.config.db_path)
+        self.tool_registry = ToolRegistry()
+        self.cache = ResponseCache(self.config.cache_settings)
+        register_builtin_tools(self.tool_registry)
+        
+    FUNCTION execute_prompt(user_message, conversation_id=None, options={}):
+        """
+        Main entry point for executing a prompt
+        """
+        TRY:
+            # Get or create conversation
+            IF conversation_id:
+                conversation = self.conversation_manager.get(conversation_id)
+            ELSE:
+                conversation = self.conversation_manager.create_new()
+            
+            # Add user message to conversation
+            conversation.add_message("user", user_message)
+            
+            # Check cache
+            cache_key = generate_cache_key(conversation, options)
+            IF self.cache.has(cache_key) AND options.get('use_cache', True):
+                RETURN self.cache.get(cache_key)
+            
+            # Prepare messages for LLM
+            messages = prepare_messages(conversation, options)
+            
+            # Handle context window overflow
+            messages = handle_context_overflow(messages, self.llm_backend.max_tokens)
+            
+            # Execute with tool support
+            response = self.execute_with_tools(messages, conversation, options)
+            
+            # Add response to conversation
+            conversation.add_message("assistant", response.content)
+            self.conversation_manager.save(conversation)
+            
+            # Cache response
+            IF options.get('cache_response', True):
+                self.cache.set(cache_key, response)
+            
+            RETURN response
+            
+        CATCH BackendError AS e:
+            RETURN handle_backend_error(e, conversation)
+        CATCH ContextOverflowError AS e:
+            RETURN handle_context_overflow_error(e, conversation)
+        CATCH Exception AS e:
+            log_error(e)
+            RETURN create_error_response(e)
+    
+    FUNCTION execute_with_tools(messages, conversation, options):
+        """
+        Execute prompt with tool support (function calling)
+        """
+        max_iterations = options.get('max_tool_iterations', 10)
+        tools_schema = self.tool_registry.get_schema()
+        
+        FOR iteration IN RANGE(max_iterations):
+            # Call LLM with tool definitions
+            response = self.llm_backend.complete(
+                messages=messages,
+                tools=tools_schema,
+                **options
+            )
+            
+            # Check if LLM wants to use tools
+            IF response.has_tool_calls():
+                tool_results = []
+                
+                FOR tool_call IN response.tool_calls:
+                    # Validate tool exists
+                    IF NOT self.tool_registry.has(tool_call.name):
+                        tool_results.append(create_tool_error(
+                            f"Tool '{tool_call.name}' not found"
+                        ))
+                        CONTINUE
+                    
+                    # Execute tool
+                    TRY:
+                        result = self.execute_tool(
+                            tool_call.name,
+                            tool_call.parameters,
+                            timeout=options.get('tool_timeout', 30)
+                        )
+                        tool_results.append(result)
+                        
+                    CATCH ToolExecutionError AS e:
+                        tool_results.append(create_tool_error(e))
+                
+                # Add tool results to conversation
+                messages.append({
+                    "role": "tool",
+                    "content": json_encode(tool_results),
+                    "tool_calls": response.tool_calls
+                })
+                
+                # Continue loop to let LLM process tool results
+                CONTINUE
+            
+            ELSE:
+                # No more tool calls, return final response
+                RETURN response
+        
+        # Max iterations reached
+        RAISE MaxIterationsError("Maximum tool execution iterations reached")
+    
+    FUNCTION execute_tool(tool_name, parameters, timeout):
+        """
+        Execute a single tool with timeout and sandboxing
+        """
+        tool = self.tool_registry.get(tool_name)
+        
+        # Validate parameters
+        IF NOT tool.validate_parameters(parameters):
+            RAISE InvalidParametersError(f"Invalid parameters for {tool_name}")
+        
+        # Execute with timeout
+        WITH Timeout(timeout):
+            WITH Sandbox(tool.permissions):
+                result = tool.execute(parameters)
+        
+        # Log execution
+        log_tool_execution(tool_name, parameters, result)
+        
+        RETURN result
+```
+
+=== 6.2 Conversation Manager
+
+```
+CLASS ConversationManager:
+    
+    CONSTRUCTOR(db_path):
+        self.db = initialize_database(db_path)
+        self.cache = {}  # In-memory cache for active conversations
+    
+    FUNCTION create_new(metadata={}):
+        """
+        Create a new conversation
+        """
+        conversation = Conversation(
+            id=generate_uuid(),
+            created_at=now(),
+            messages=[],
+            metadata=metadata
+        )
+        
+        self.db.insert('conversations', conversation.to_dict())
+        self.cache[conversation.id] = conversation
+        
+        RETURN conversation
+    
+    FUNCTION get(conversation_id):
+        """
+        Retrieve a conversation by ID
+        """
+        # Check cache first
+        IF conversation_id IN self.cache:
+            RETURN self.cache[conversation_id]
+        
+        # Load from database
+        data = self.db.query(
+            'SELECT * FROM conversations WHERE id = ?',
+            [conversation_id]
+        )
+        
+        IF NOT data:
+            RAISE ConversationNotFoundError(f"Conversation {conversation_id} not found")
+        
+        conversation = Conversation.from_dict(data)
+        self.cache[conversation_id] = conversation
+        
+        RETURN conversation
+    
+    FUNCTION save(conversation):
+        """
+        Persist conversation to database
+        """
+        WITH self.db.transaction():
+            self.db.update(
+                'conversations',
+                {'id': conversation.id},
+                conversation.to_dict()
+            )
+        
+        # Update cache
+        self.cache[conversation.id] = conversation
+    
+    FUNCTION search(query, limit=10):
+        """
+        Full-text search across conversations
+        """
+        results = self.db.full_text_search(
+            table='conversations',
+            query=query,
+            limit=limit
+        )
+        
+        RETURN [Conversation.from_dict(r) FOR r IN results]
+```
+
+=== 6.3 Context Window Management
+
+```
+FUNCTION handle_context_overflow(messages, max_tokens, strategy='truncation'):
+    """
+    Handle conversation history that exceeds context window
+    """
+    current_tokens = count_tokens(messages)
+    
+    IF current_tokens <= max_tokens * 0.9:
+        RETURN messages  # No overflow, return as-is
+    
+    target_tokens = max_tokens * 0.8  # Leave some buffer
+    
+    IF strategy == 'truncation':
+        RETURN truncate_strategy(messages, target_tokens)
+    
+    ELIF strategy == 'summarization':
+        RETURN summarization_strategy(messages, target_tokens)
+    
+    ELIF strategy == 'semantic':
+        RETURN semantic_strategy(messages, target_tokens)
+    
+    ELSE:
+        RAISE InvalidStrategyError(f"Unknown strategy: {strategy}")
+
+
+FUNCTION truncate_strategy(messages, target_tokens):
+    """
+    Keep system prompt and recent messages
+    """
+    system_messages = [m FOR m IN messages IF m.role == 'system']
+    other_messages = [m FOR m IN messages IF m.role != 'system']
+    
+    # Always keep system messages
+    result = system_messages
+    tokens_used = count_tokens(system_messages)
+    
+    # Add messages from the end until we hit target
+    FOR message IN REVERSE(other_messages):
+        message_tokens = count_tokens([message])
+        IF tokens_used + message_tokens <= target_tokens:
+            result.insert(len(system_messages), message)
+            tokens_used += message_tokens
+        ELSE:
+            BREAK
+    
+    # Add truncation notice
+    IF len(result) < len(messages):
+        result.insert(len(system_messages), {
+            'role': 'system',
+            'content': f'[Note: {len(messages) - len(result)} earlier messages truncated]'
+        })
+    
+    RETURN result
+
+
+FUNCTION summarization_strategy(messages, target_tokens):
+    """
+    Summarize old messages, keep recent ones
+    """
+    system_messages = [m FOR m IN messages IF m.role == 'system']
+    other_messages = [m FOR m IN messages IF m.role != 'system']
+    
+    # Keep last N messages in full
+    keep_recent = 5
+    recent_messages = other_messages[-keep_recent:]
+    old_messages = other_messages[:-keep_recent]
+    
+    # Calculate token budget
+    system_tokens = count_tokens(system_messages)
+    recent_tokens = count_tokens(recent_messages)
+    available_for_summary = target_tokens - system_tokens - recent_tokens
+    
+    IF available_for_summary > 0 AND len(old_messages) > 0:
+        # Generate summary of old messages
+        summary_prompt = create_summary_prompt(old_messages)
+        summary = llm_backend.complete(summary_prompt, max_tokens=available_for_summary)
+        
+        summary_message = {
+            'role': 'system',
+            'content': f'[Summary of earlier conversation]: {summary}'
+        }
+        
+        RETURN system_messages + [summary_message] + recent_messages
+    
+    ELSE:
+        # Not enough space for summary, fall back to truncation
+        RETURN truncate_strategy(messages, target_tokens)
+
+
+FUNCTION semantic_strategy(messages, target_tokens, current_query):
+    """
+    Keep semantically relevant messages
+    """
+    system_messages = [m FOR m IN messages IF m.role == 'system']
+    other_messages = [m FOR m IN messages IF m.role != 'system']
+    
+    # Embed current query and all messages
+    query_embedding = embed_text(current_query)
+    message_embeddings = [embed_text(m.content) FOR m IN other_messages]
+    
+    # Calculate relevance scores
+    relevance_scores = [
+        cosine_similarity(query_embedding, m_emb)
+        FOR m_emb IN message_embeddings
+    ]
+    
+    # Sort messages by relevance
+    indexed_messages = list(zip(other_messages, relevance_scores))
+    indexed_messages.sort(key=lambda x: x[1], reverse=True)
+    
+    # Select top messages that fit in token budget
+    selected = []
+    tokens_used = count_tokens(system_messages)
+    
+    FOR message, score IN indexed_messages:
+        message_tokens = count_tokens([message])
+        IF tokens_used + message_tokens <= target_tokens:
+            selected.append(message)
+            tokens_used += message_tokens
+    
+    # Sort selected messages back to chronological order
+    selected.sort(key=lambda m: m.timestamp)
+    
+    RETURN system_messages + selected
+```
+
+=== 6.4 Tool Registry and Execution
+
+```
+CLASS ToolRegistry:
+    
+    CONSTRUCTOR():
+        self.tools = {}
+    
+    FUNCTION register(tool):
+        """
+        Register a new tool
+        """
+        IF NOT isinstance(tool, Tool):
+            RAISE TypeError("Must be a Tool instance")
+        
+        IF tool.name IN self.tools:
+            log_warning(f"Overwriting existing tool: {tool.name}")
+        
+        self.tools[tool.name] = tool
+        log_info(f"Registered tool: {tool.name}")
+    
+    FUNCTION get(tool_name):
+        """
+        Get a tool by name
+        """
+        IF tool_name NOT IN self.tools:
+            RAISE ToolNotFoundError(f"Tool '{tool_name}' not registered")
+        
+        RETURN self.tools[tool_name]
+    
+    FUNCTION get_schema():
+        """
+        Get OpenAI-compatible tool schema for all registered tools
+        """
+        RETURN [tool.to_openai_schema() FOR tool IN self.tools.values()]
+
+
+CLASS Tool:
+    """
+    Base class for all tools
+    """
+    
+    FUNCTION __init__(name, description, parameters_schema, permissions):
+        self.name = name
+        self.description = description
+        self.parameters_schema = parameters_schema
+        self.permissions = permissions  # List of required permissions
+    
+    ABSTRACT FUNCTION execute(parameters):
+        """
+        Execute the tool with given parameters
+        Must be implemented by subclass
+        """
+        PASS
+    
+    FUNCTION validate_parameters(parameters):
+        """
+        Validate parameters against schema
+        """
+        TRY:
+            jsonschema.validate(parameters, self.parameters_schema)
+            RETURN True
+        CATCH ValidationError:
+            RETURN False
+    
+    FUNCTION to_openai_schema():
+        """
+        Convert tool definition to OpenAI function calling schema
+        """
+        RETURN {
+            "type": "function",
+            "function": {
+                "name": self.name,
+                "description": self.description,
+                "parameters": self.parameters_schema
+            }
+        }
+
+
+CLASS FileReadTool(Tool):
+    """
+    Example: Tool for reading files
+    """
+    
+    CONSTRUCTOR():
+        SUPER().__init__(
+            name="read_file",
+            description="Read the contents of a file",
+            parameters_schema={
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "Path to the file to read"
+                    },
+                    "encoding": {
+                        "type": "string",
+                        "description": "File encoding (default: utf-8)",
+                        "default": "utf-8"
+                    }
+                },
+                "required": ["file_path"]
+            },
+            permissions=["file_read"]
+        )
+    
+    FUNCTION execute(parameters):
+        file_path = parameters['file_path']
+        encoding = parameters.get('encoding', 'utf-8')
+        
+        # Security check: prevent path traversal
+        IF '..' IN file_path OR file_path.startswith('/'):
+            RAISE SecurityError("Path traversal not allowed")
+        
+        TRY:
+            WITH open(file_path, 'r', encoding=encoding) AS file:
+                content = file.read()
+            
+            RETURN {
+                "success": True,
+                "content": content,
+                "size": len(content),
+                "path": file_path
+            }
+        
+        CATCH FileNotFoundError:
+            RETURN {
+                "success": False,
+                "error": f"File not found: {file_path}"
+            }
+        
+        CATCH Exception AS e:
+            RETURN {
+                "success": False,
+                "error": str(e)
+            }
+```
+
+=== 6.5 LLM Backend Abstraction
+
+```
+CLASS LLMBackend:
+    """
+    Abstract base class for LLM backends
+    """
+    
+    ABSTRACT FUNCTION complete(messages, **options):
+        """
+        Generate completion for given messages
+        """
+        PASS
+    
+    ABSTRACT FUNCTION stream_complete(messages, **options):
+        """
+        Generate completion with streaming
+        """
+        PASS
+    
+    ABSTRACT FUNCTION get_available_models():
+        """
+        List available models
+        """
+        PASS
+
+
+CLASS OllamaBackend(LLMBackend):
+    """
+    Implementation for Ollama
+    """
+    
+    CONSTRUCTOR(config):
+        self.base_url = config.get('base_url', 'http://localhost:11434')
+        self.default_model = config.get('model', 'llama2')
+        self.timeout = config.get('timeout', 60)
+        self.max_tokens = config.get('max_tokens', 4096)
+    
+    FUNCTION complete(messages, **options):
+        model = options.get('model', self.default_model)
+        temperature = options.get('temperature', 0.7)
+        max_tokens = options.get('max_tokens', self.max_tokens)
+        
+        # Format messages for Ollama
+        formatted = self._format_messages(messages)
+        
+        # Make request
+        TRY:
+            response = http_post(
+                url=f"{self.base_url}/api/chat",
+                json={
+                    "model": model,
+                    "messages": formatted,
+                    "options": {
+                        "temperature": temperature,
+                        "num_predict": max_tokens
+                    },
+                    "stream": False
+                },
+                timeout=self.timeout
+            )
+            
+            IF response.status_code != 200:
+                RAISE BackendError(f"Ollama returned status {response.status_code}")
+            
+            data = response.json()
+            
+            RETURN CompletionResponse(
+                content=data['message']['content'],
+                model=model,
+                tokens_used=data.get('eval_count', 0),
+                finish_reason=data.get('done_reason', 'stop')
+            )
+        
+        CATCH HTTPError AS e:
+            RAISE BackendError(f"HTTP error: {e}")
+        
+        CATCH Timeout:
+            RAISE BackendError("Request timeout")
+    
+    FUNCTION stream_complete(messages, **options):
+        model = options.get('model', self.default_model)
+        
+        formatted = self._format_messages(messages)
+        
+        TRY:
+            WITH http_post_stream(
+                url=f"{self.base_url}/api/chat",
+                json={
+                    "model": model,
+                    "messages": formatted,
+                    "stream": True
+                }
+            ) AS stream:
+                FOR line IN stream.iter_lines():
+                    IF line:
+                        data = json_decode(line)
+                        IF 'message' IN data:
+                            YIELD data['message']['content']
+        
+        CATCH Exception AS e:
+            RAISE BackendError(f"Streaming error: {e}")
+    
+    FUNCTION _format_messages(messages):
+        """
+        Convert standard message format to Ollama format
+        """
+        RETURN [
+            {
+                "role": msg.role,
+                "content": msg.content
+            }
+            FOR msg IN messages
+        ]
+```
+
+=== 6.6 Response Caching
+
+```
+CLASS ResponseCache:
+    """
+    Semantic caching for LLM responses
+    """
+    
+    CONSTRUCTOR(config):
+        self.enabled = config.get('enabled', True)
+        self.ttl = config.get('ttl', 3600)  # 1 hour default
+        self.max_size = config.get('max_size', 1000)
+        self.similarity_threshold = config.get('similarity_threshold', 0.95)
+        
+        self.cache = {}  # key -> (response, timestamp, embedding)
+        self.embedding_model = load_embedding_model()
+    
+    FUNCTION has(key):
+        IF NOT self.enabled:
+            RETURN False
+        
+        # Check exact match
+        IF key IN self.cache:
+            response, timestamp, _ = self.cache[key]
+            IF now() - timestamp < self.ttl:
+                RETURN True
+            ELSE:
+                # Expired, remove
+                DEL self.cache[key]
+                RETURN False
+        
+        RETURN False
+    
+    FUNCTION get(key):
+        IF key IN self.cache:
+            response, timestamp, _ = self.cache[key]
+            IF now() - timestamp < self.ttl:
+                log_info("Cache hit (exact)")
+                RETURN response
+        
+        RAISE KeyError(f"Key not in cache: {key}")
+    
+    FUNCTION semantic_get(query):
+        """
+        Find cached response for semantically similar query
+        """
+        IF NOT self.enabled:
+            RETURN None
+        
+        query_embedding = self.embedding_model.embed(query)
+        
+        best_match = None
+        best_similarity = 0
+        
+        FOR key, (response, timestamp, cached_embedding) IN self.cache.items():
+            # Check if expired
+            IF now() - timestamp >= self.ttl:
+                CONTINUE
+            
+            # Calculate similarity
+            similarity = cosine_similarity(query_embedding, cached_embedding)
+            
+            IF similarity > best_similarity:
+                best_similarity = similarity
+                best_match = response
+        
+        IF best_similarity >= self.similarity_threshold:
+            log_info(f"Cache hit (semantic, similarity={best_similarity:.3f})")
+            RETURN best_match
+        
+        RETURN None
+    
+    FUNCTION set(key, response, query_text):
+        IF NOT self.enabled:
+            RETURN
+        
+        # Enforce max size
+        IF len(self.cache) >= self.max_size:
+            self._evict_oldest()
+        
+        # Embed query for semantic caching
+        embedding = self.embedding_model.embed(query_text)
+        
+        self.cache[key] = (response, now(), embedding)
+    
+    FUNCTION _evict_oldest():
+        """
+        Remove oldest cache entry
+        """
+        oldest_key = None
+        oldest_time = float('inf')
+        
+        FOR key, (_, timestamp, _) IN self.cache.items():
+            IF timestamp < oldest_time:
+                oldest_time = timestamp
+                oldest_key = key
+        
+        IF oldest_key:
+            DEL self.cache[oldest_key]
+```
+
+=== 6.7 Document Processing and RAG System
+
+```
+CLASS DocumentProcessor:
+    """
+    Handles document loading, parsing, and extraction
+    """
+    
+    CONSTRUCTOR(config):
+        self.config = config
+        self.supported_formats = ['pdf', 'docx', 'txt', 'md', 'html']
+        self.ocr_enabled = config.get('ocr_enabled', False)
+    
+    FUNCTION process_document(file_path):
+        """
+        Main entry point for document processing
+        """
+        # Detect file type
+        file_type = detect_file_type(file_path)
+        
+        IF file_type NOT IN self.supported_formats:
+            RAISE UnsupportedFormatError(f"Format {file_type} not supported")
+        
+        # Check file size
+        file_size = get_file_size(file_path)
+        IF file_size > self.config.max_file_size:
+            RETURN self._process_large_document(file_path, file_size)
+        
+        # Extract content based on type
+        TRY:
+            IF file_type == 'pdf':
+                content = self._process_pdf(file_path)
+            ELIF file_type == 'docx':
+                content = self._process_docx(file_path)
+            ELIF file_type IN ['txt', 'md']:
+                content = self._process_text(file_path)
+            ELIF file_type == 'html':
+                content = self._process_html(file_path)
+            
+            RETURN DocumentContent(
+                text=content.text,
+                metadata=content.metadata,
+                structure=content.structure
+            )
+        
+        CATCH Exception AS e:
+            log_error(f"Failed to process {file_path}: {e}")
+            RAISE DocumentProcessingError(e)
+    
+    FUNCTION _process_pdf(file_path):
+        """
+        Extract content from PDF
+        """
+        import pdfplumber
+        
+        pages_content = []
+        metadata = {}
+        tables = []
+        
+        TRY:
+            WITH pdfplumber.open(file_path) AS pdf:
+                # Extract metadata
+                metadata = {
+                    'page_count': len(pdf.pages),
+                    'author': pdf.metadata.get('Author', 'Unknown'),
+                    'title': pdf.metadata.get('Title', ''),
+                    'creation_date': pdf.metadata.get('CreationDate', '')
+                }
+                
+                # Extract text from each page
+                FOR page_num, page IN enumerate(pdf.pages, 1):
+                    # Extract text
+                    text = page.extract_text()
+                    
+                    # Check if page has text
+                    IF NOT text OR len(text.strip()) < 10:
+                        IF self.ocr_enabled:
+                            text = self._ocr_page(page)
+                    
+                    pages_content.append({
+                        'page': page_num,
+                        'text': text
+                    })
+                    
+                    # Extract tables
+                    page_tables = page.extract_tables()
+                    IF page_tables:
+                        FOR table IN page_tables:
+                            tables.append({
+                                'page': page_num,
+                                'data': table
+                            })
+        
+        CATCH Exception AS e:
+            IF "password" IN str(e).lower():
+                RAISE PasswordProtectedError(file_path)
+            ELSE:
+                RAISE PDFExtractionError(e)
+        
+        # Combine all pages
+        full_text = "\n\n".join([p['text'] FOR p IN pages_content])
+        
+        RETURN DocumentContent(
+            text=full_text,
+            metadata=metadata,
+            pages=pages_content,
+            tables=tables
+        )
+    
+    FUNCTION _process_large_document(file_path, file_size):
+        """
+        Handle large documents with streaming
+        """
+        log_info(f"Processing large document ({file_size / 1024 / 1024:.1f}MB)")
+        
+        # Process in chunks
+        FOR chunk IN self._stream_document(file_path):
+            YIELD chunk
+
+
+CLASS DocumentChunker:
+    """
+    Splits documents into manageable chunks for embedding
+    """
+    
+    CONSTRUCTOR(chunk_size=500, chunk_overlap=50, strategy='semantic'):
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
+        self.strategy = strategy
+    
+    FUNCTION chunk_document(document):
+        """
+        Split document into chunks based on strategy
+        """
+        IF self.strategy == 'fixed':
+            RETURN self._fixed_size_chunking(document)
+        ELIF self.strategy == 'semantic':
+            RETURN self._semantic_chunking(document)
+        ELIF self.strategy == 'recursive':
+            RETURN self._recursive_chunking(document)
+    
+    FUNCTION _fixed_size_chunking(document):
+        """
+        Simple fixed-size chunking with overlap
+        """
+        text = document.text
+        chunks = []
+        start = 0
+        
+        WHILE start < len(text):
+            end = start + self.chunk_size
+            chunk_text = text[start:end]
+            
+            chunks.append(DocumentChunk(
+                text=chunk_text,
+                start_pos=start,
+                end_pos=end,
+                metadata=document.metadata
+            ))
+            
+            start = end - self.chunk_overlap
+        
+        RETURN chunks
+    
+    FUNCTION _semantic_chunking(document):
+        """
+        Chunk by semantic boundaries (paragraphs, sections)
+        """
+        # Split by paragraphs
+        paragraphs = split_paragraphs(document.text)
+        
+        chunks = []
+        current_chunk = []
+        current_size = 0
+        
+        FOR para IN paragraphs:
+            para_size = len(para)
+            
+            IF current_size + para_size > self.chunk_size AND current_chunk:
+                # Save current chunk
+                chunks.append(DocumentChunk(
+                    text="\n\n".join(current_chunk),
+                    metadata=document.metadata
+                ))
+                
+                # Start new chunk with overlap
+                overlap_text = current_chunk[-1] IF self.chunk_overlap > 0 ELSE ""
+                current_chunk = [overlap_text, para] IF overlap_text ELSE [para]
+                current_size = len(overlap_text) + para_size
+            ELSE:
+                current_chunk.append(para)
+                current_size += para_size
+        
+        # Add remaining chunk
+        IF current_chunk:
+            chunks.append(DocumentChunk(
+                text="\n\n".join(current_chunk),
+                metadata=document.metadata
+            ))
+        
+        RETURN chunks
+
+
+CLASS EmbeddingGenerator:
+    """
+    Generates embeddings for text chunks
+    """
+    
+    CONSTRUCTOR(model_name='all-MiniLM-L6-v2', device='cpu'):
+        self.model_name = model_name
+        self.model = load_embedding_model(model_name, device)
+        self.dimension = self.model.get_dimension()
+        self.cache = {}
+    
+    FUNCTION embed_text(text):
+        """
+        Generate embedding for single text
+        """
+        # Check cache
+        text_hash = hash(text)
+        IF text_hash IN self.cache:
+            RETURN self.cache[text_hash]
+        
+        # Generate embedding
+        embedding = self.model.encode(text)
+        
+        # Cache result
+        self.cache[text_hash] = embedding
+        
+        RETURN embedding
+    
+    FUNCTION embed_batch(texts, batch_size=32):
+        """
+        Generate embeddings for multiple texts efficiently
+        """
+        all_embeddings = []
+        
+        FOR i IN RANGE(0, len(texts), batch_size):
+            batch = texts[i:i + batch_size]
+            
+            # Check which are cached
+            uncached_indices = []
+            batch_results = []
+            
+            FOR idx, text IN enumerate(batch):
+                text_hash = hash(text)
+                IF text_hash IN self.cache:
+                    batch_results.append(self.cache[text_hash])
+                ELSE:
+                    uncached_indices.append(idx)
+                    batch_results.append(None)
+            
+            # Generate embeddings for uncached texts
+            IF uncached_indices:
+                uncached_texts = [batch[idx] FOR idx IN uncached_indices]
+                new_embeddings = self.model.encode(uncached_texts)
+                
+                # Insert into results and cache
+                FOR idx, embedding IN zip(uncached_indices, new_embeddings):
+                    batch_results[idx] = embedding
+                    text_hash = hash(batch[idx])
+                    self.cache[text_hash] = embedding
+            
+            all_embeddings.extend(batch_results)
+        
+        RETURN all_embeddings
+
+
+CLASS VectorStore:
+    """
+    Manages vector storage and similarity search
+    """
+    
+    CONSTRUCTOR(collection_name, backend='chromadb', persist_directory=None):
+        self.collection_name = collection_name
+        self.backend = backend
+        self.persist_directory = persist_directory
+        
+        IF backend == 'chromadb':
+            self.store = self._init_chromadb()
+        ELIF backend == 'faiss':
+            self.store = self._init_faiss()
+    
+    FUNCTION add_documents(chunks, embeddings, metadatas):
+        """
+        Add document chunks with embeddings to vector store
+        """
+        # Generate unique IDs
+        ids = [f"{self.collection_name}_{i}" FOR i IN RANGE(len(chunks))]
+        
+        # Add to store
+        self.store.add(
+            ids=ids,
+            embeddings=embeddings,
+            documents=chunks,
+            metadatas=metadatas
+        )
+        
+        log_info(f"Added {len(chunks)} chunks to {self.collection_name}")
+    
+    FUNCTION search(query_embedding, k=5, filter=None):
+        """
+        Similarity search for query
+        """
+        results = self.store.query(
+            query_embeddings=[query_embedding],
+            n_results=k,
+            where=filter
+        )
+        
+        RETURN results
+    
+    FUNCTION hybrid_search(query_text, query_embedding, k=5, alpha=0.5):
+        """
+        Combine keyword and semantic search
+        """
+        # Keyword search
+        keyword_results = self.store.search_text(query_text, k=k*2)
+        
+        # Semantic search
+        semantic_results = self.search(query_embedding, k=k*2)
+        
+        # Merge results with weighted scoring
+        merged = self._merge_results(
+            keyword_results,
+            semantic_results,
+            alpha=alpha
+        )
+        
+        RETURN merged[:k]
+
+
+CLASS RAGSystem:
+    """
+    Complete RAG system integrating all components
+    """
+    
+    CONSTRUCTOR(config):
+        self.document_processor = DocumentProcessor(config)
+        self.chunker = DocumentChunker(
+            chunk_size=config.chunk_size,
+            chunk_overlap=config.chunk_overlap,
+            strategy=config.chunking_strategy
+        )
+        self.embedding_generator = EmbeddingGenerator(
+            model_name=config.embedding_model
+        )
+        self.vector_store = VectorStore(
+            collection_name=config.collection_name,
+            backend=config.vector_backend,
+            persist_directory=config.persist_directory
+        )
+        self.llm_backend = None  # Set externally
+    
+    FUNCTION index_document(file_path):
+        """
+        Index a document for RAG
+        """
+        # Step 1: Process document
+        log_info(f"Processing document: {file_path}")
+        document = self.document_processor.process_document(file_path)
+        
+        # Step 2: Chunk document
+        log_info("Chunking document...")
+        chunks = self.chunker.chunk_document(document)
+        
+        # Step 3: Generate embeddings
+        log_info(f"Generating embeddings for {len(chunks)} chunks...")
+        chunk_texts = [chunk.text FOR chunk IN chunks]
+        embeddings = self.embedding_generator.embed_batch(chunk_texts)
+        
+        # Step 4: Store in vector database
+        log_info("Storing in vector database...")
+        metadatas = [
+            {
+                'source': file_path,
+                'chunk_index': i,
+                **chunk.metadata
+            }
+            FOR i, chunk IN enumerate(chunks)
+        ]
+        
+        self.vector_store.add_documents(chunk_texts, embeddings, metadatas)
+        
+        log_info(f"Successfully indexed {file_path}")
+        
+        RETURN {
+            'file_path': file_path,
+            'num_chunks': len(chunks),
+            'num_pages': document.metadata.get('page_count', 'N/A')
+        }
+    
+    FUNCTION query(question, k=5, mode='simple'):
+        """
+        Query the RAG system
+        """
+        IF mode == 'simple':
+            RETURN self._simple_rag(question, k)
+        ELIF mode == 'conversational':
+            RETURN self._conversational_rag(question, k)
+        ELIF mode == 'multi_query':
+            RETURN self._multi_query_rag(question, k)
+    
+    FUNCTION _simple_rag(question, k):
+        """
+        Simple RAG: retrieve and generate
+        """
+        # Step 1: Embed query
+        query_embedding = self.embedding_generator.embed_text(question)
+        
+        # Step 2: Retrieve relevant chunks
+        results = self.vector_store.search(query_embedding, k=k)
+        
+        # Step 3: Format context
+        context = self._format_context(results)
+        
+        # Step 4: Generate response with LLM
+        prompt = f"""Answer the question based on the following context.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+        
+        response = self.llm_backend.complete(prompt)
+        
+        # Step 5: Add citations
+        response_with_citations = self._add_citations(response, results)
+        
+        RETURN response_with_citations
+    
+    FUNCTION _multi_query_rag(question, k):
+        """
+        Generate multiple query variations for better recall
+        """
+        # Generate query variations
+        query_variations = self._generate_query_variations(question)
+        
+        # Retrieve for each variation
+        all_results = []
+        FOR query IN query_variations:
+            query_embedding = self.embedding_generator.embed_text(query)
+            results = self.vector_store.search(query_embedding, k=k)
+            all_results.extend(results)
+        
+        # Deduplicate and rerank
+        unique_results = self._deduplicate_results(all_results)
+        reranked = self._rerank_results(unique_results, question)
+        
+        # Use top K after reranking
+        top_results = reranked[:k]
+        
+        # Generate response
+        context = self._format_context(top_results)
+        response = self.llm_backend.complete(
+            f"Context: {context}\n\nQuestion: {question}\n\nAnswer:"
+        )
+        
+        RETURN self._add_citations(response, top_results)
+    
+    FUNCTION _format_context(results):
+        """
+        Format retrieved chunks into context string
+        """
+        context_parts = []
+        
+        FOR i, result IN enumerate(results, 1):
+            source = result.metadata.get('source', 'Unknown')
+            page = result.metadata.get('page', 'N/A')
+            
+            context_parts.append(
+                f"[{i}] (Source: {source}, Page: {page})\n{result.text}"
+            )
+        
+        RETURN "\n\n".join(context_parts)
+    
+    FUNCTION _add_citations(response, results):
+        """
+        Add source citations to response
+        """
+        sources = []
+        FOR result IN results:
+            source = result.metadata.get('source', 'Unknown')
+            page = result.metadata.get('page', 'N/A')
+            sources.append(f"- {source} (Page {page})")
+        
+        citations = "\n\nSources:\n" + "\n".join(sources)
+        
+        RETURN response + citations
+```
+
+== 7. Test Cases Requirements
+
+=== 7.1 Unit Tests
+
+==== UT-1: LLM Backend Tests
+
+*Test: Backend Initialization*
+```
+TEST test_backend_initialization():
+    config = {
+        'base_url': 'http://localhost:11434',
+        'model': 'llama2'
+    }
+    backend = OllamaBackend(config)
+    
+    ASSERT backend.base_url == 'http://localhost:11434'
+    ASSERT backend.default_model == 'llama2'
+```
+
+*Test: Successful Completion*
+```
+TEST test_successful_completion():
+    backend = OllamaBackend(config)
+    messages = [{'role': 'user', 'content': 'Hello'}]
+    
+    WITH mock_http_response(status=200, json={'message': {'content': 'Hi there!'}}):
+        response = backend.complete(messages)
+    
+    ASSERT response.content == 'Hi there!'
+    ASSERT response.finish_reason == 'stop'
+```
+
+*Test: Backend Timeout*
+```
+TEST test_backend_timeout():
+    backend = OllamaBackend(config)
+    messages = [{'role': 'user', 'content': 'Hello'}]
+    
+    WITH mock_http_timeout():
+        WITH ASSERT_RAISES(BackendError) AS e:
+            backend.complete(messages)
+        
+        ASSERT 'timeout' IN str(e).lower()
+```
+
+*Test: Model Not Found*
+```
+TEST test_model_not_found():
+    backend = OllamaBackend(config)
+    messages = [{'role': 'user', 'content': 'Hello'}]
+    
+    WITH mock_http_response(status=404, json={'error': 'model not found'}):
+        WITH ASSERT_RAISES(BackendError) AS e:
+            backend.complete(messages, model='nonexistent')
+        
+        ASSERT 'model not found' IN str(e).lower()
+```
+
+==== UT-2: Conversation Manager Tests
+
+*Test: Create New Conversation*
+```
+TEST test_create_conversation():
+    manager = ConversationManager(':memory:')
+    conversation = manager.create_new()
+    
+    ASSERT conversation.id IS NOT None
+    ASSERT len(conversation.messages) == 0
+    ASSERT conversation.created_at <= now()
+```
+
+*Test: Add Messages*
+```
+TEST test_add_messages():
+    manager = ConversationManager(':memory:')
+    conversation = manager.create_new()
+    
+    conversation.add_message('user', 'Hello')
+    conversation.add_message('assistant', 'Hi there!')
+    
+    ASSERT len(conversation.messages) == 2
+    ASSERT conversation.messages[0].role == 'user'
+    ASSERT conversation.messages[1].role == 'assistant'
+```
+
+*Test: Retrieve Conversation*
+```
+TEST test_retrieve_conversation():
+    manager = ConversationManager(':memory:')
+    conv1 = manager.create_new()
+    conv1.add_message('user', 'Test')
+    manager.save(conv1)
+    
+    conv2 = manager.get(conv1.id)
+    
+    ASSERT conv2.id == conv1.id
+    ASSERT len(conv2.messages) == 1
+    ASSERT conv2.messages[0].content == 'Test'
+```
+
+*Test: Conversation Not Found*
+```
+TEST test_conversation_not_found():
+    manager = ConversationManager(':memory:')
+    
+    WITH ASSERT_RAISES(ConversationNotFoundError):
+        manager.get('nonexistent-id')
+```
+
+==== UT-3: Context Window Management Tests
+
+*Test: No Overflow*
+```
+TEST test_no_overflow():
+    messages = create_messages(count=5, tokens_each=100)
+    max_tokens = 1000
+    
+    result = handle_context_overflow(messages, max_tokens)
+    
+    ASSERT result == messages
+```
+
+*Test: Truncation Strategy*
+```
+TEST test_truncation_strategy():
+    messages = create_messages(count=20, tokens_each=100)
+    max_tokens = 1000
+    
+    result = handle_context_overflow(messages, max_tokens, strategy='truncation')
+    
+    ASSERT count_tokens(result) <= max_tokens * 0.8
+    ASSERT any('[Note:' IN m.content FOR m IN result)  # Truncation notice
+```
+
+*Test: Summarization Strategy*
+```
+TEST test_summarization_strategy():
+    messages = create_messages(count=20, tokens_each=100)
+    max_tokens = 1000
+    
+    WITH mock_llm_summary('This is a summary'):
+        result = handle_context_overflow(messages, max_tokens, strategy='summarization')
+    
+    ASSERT count_tokens(result) <= max_tokens * 0.8
+    ASSERT any('[Summary' IN m.content FOR m IN result)
+```
+
+==== UT-4: Tool Registry Tests
+
+*Test: Register Tool*
+```
+TEST test_register_tool():
+    registry = ToolRegistry()
+    tool = FileReadTool()
+    
+    registry.register(tool)
+    
+    ASSERT registry.has('read_file')
+    ASSERT registry.get('read_file') == tool
+```
+
+*Test: Get Schema*
+```
+TEST test_get_schema():
+    registry = ToolRegistry()
+    registry.register(FileReadTool())
+    registry.register(CalculatorTool())
+    
+    schema = registry.get_schema()
+    
+    ASSERT len(schema) == 2
+    ASSERT schema[0]['type'] == 'function'
+    ASSERT 'name' IN schema[0]['function']
+```
+
+*Test: Tool Validation*
+```
+TEST test_tool_parameter_validation():
+    tool = FileReadTool()
+    
+    # Valid parameters
+    ASSERT tool.validate_parameters({'file_path': 'test.txt'})
+    
+    # Missing required parameter
+    ASSERT NOT tool.validate_parameters({})
+    
+    # Invalid type
+    ASSERT NOT tool.validate_parameters({'file_path': 123})
+```
+
+==== UT-5: Cache Tests
+
+*Test: Exact Match Caching*
+```
+TEST test_exact_cache_hit():
+    cache = ResponseCache({'enabled': True, 'ttl': 3600})
+    
+    key = 'test_key'
+    response = 'Cached response'
+    cache.set(key, response, 'test query')
+    
+    ASSERT cache.has(key)
+    ASSERT cache.get(key) == response
+```
+
+*Test: Cache Expiration*
+```
+TEST test_cache_expiration():
+    cache = ResponseCache({'enabled': True, 'ttl': 1})
+    
+    key = 'test_key'
+    cache.set(key, 'response', 'query')
+    
+    sleep(2)
+    
+    ASSERT NOT cache.has(key)
+```
+
+*Test: Semantic Caching*
+```
+TEST test_semantic_cache():
+    cache = ResponseCache({
+        'enabled': True,
+        'ttl': 3600,
+        'similarity_threshold': 0.9
+    })
+    
+    cache.set('key1', 'Response about Python', 'What is Python?')
+    
+    # Similar query should hit cache
+    result = cache.semantic_get('Tell me about Python')
+    ASSERT result == 'Response about Python'
+    
+    # Dissimilar query should miss
+    result = cache.semantic_get('What is JavaScript?')
+    ASSERT result IS None
+```
+
+=== 7.2 Integration Tests
+
+==== IT-1: End-to-End Prompt Execution
+
+*Test: Basic Prompt Execution*
+```
+TEST test_basic_prompt_execution():
+    agent = LocalPromptAgent(test_config)
+    
+    response = agent.execute_prompt('What is 2+2?')
+    
+    ASSERT response IS NOT None
+    ASSERT response.content IS NOT None
+    ASSERT len(response.content) > 0
+```
+
+*Test: Multi-Turn Conversation*
+```
+TEST test_multi_turn_conversation():
+    agent = LocalPromptAgent(test_config)
+    
+    # First turn
+    response1 = agent.execute_prompt('My name is Alice')
+    conv_id = response1.conversation_id
+    
+    # Second turn (should remember name)
+    response2 = agent.execute_prompt('What is my name?', conversation_id=conv_id)
+    
+    ASSERT 'alice' IN response2.content.lower()
+```
+
+==== IT-2: Tool Execution
+
+*Test: Single Tool Call*
+```
+TEST test_single_tool_call():
+    agent = LocalPromptAgent(test_config)
+    agent.tool_registry.register(CalculatorTool())
+    
+    WITH mock_llm_tool_call('calculator', {'expression': '2+2'}):
+        WITH mock_llm_response('The answer is 4'):
+            response = agent.execute_prompt('What is 2+2?')
+    
+    ASSERT '4' IN response.content
+```
+
+*Test: Multiple Tool Calls*
+```
+TEST test_multiple_tool_calls():
+    agent = LocalPromptAgent(test_config)
+    agent.tool_registry.register(FileReadTool())
+    agent.tool_registry.register(CalculatorTool())
+    
+    # Create test file
+    WITH create_temp_file('data.txt', 'value: 10'):
+        response = agent.execute_prompt(
+            'Read data.txt and multiply the value by 2'
+        )
+    
+    ASSERT '20' IN response.content
+```
+
+*Test: Tool Error Handling*
+```
+TEST test_tool_error_handling():
+    agent = LocalPromptAgent(test_config)
+    agent.tool_registry.register(FileReadTool())
+    
+    response = agent.execute_prompt('Read the file nonexistent.txt')
+    
+    # Should handle error gracefully
+    ASSERT response IS NOT None
+    ASSERT 'not found' IN response.content.lower() OR 'error' IN response.content.lower()
+```
+
+==== IT-3: Backend Failover
+
+*Test: Primary Backend Failure*
+```
+TEST test_backend_failover():
+    config = {
+        'backends': [
+            {'name': 'primary', 'url': 'http://localhost:11434'},
+            {'name': 'fallback', 'url': 'http://localhost:11435'}
+        ]
+    }
+    agent = LocalPromptAgent(config)
+    
+    # Simulate primary failure
+    WITH mock_backend_failure('primary'):
+        response = agent.execute_prompt('Hello')
+    
+    # Should succeed with fallback
+    ASSERT response IS NOT None
+    ASSERT response.backend_used == 'fallback'
+```
+
+=== 7.3 Performance Tests
+
+==== PT-1: Response Time
+
+*Test: P95 Response Time*
+```
+TEST test_response_time_p95():
+    agent = LocalPromptAgent(test_config)
+    latencies = []
+    
+    FOR i IN RANGE(100):
+        start = time()
+        agent.execute_prompt('Hello')
+        latencies.append(time() - start)
+    
+    p95 = percentile(latencies, 95)
+    
+    ASSERT p95 < 2.0  # 2 seconds including LLM time
+```
+
+*Test: Streaming First Token*
+```
+TEST test_streaming_first_token():
+    agent = LocalPromptAgent(test_config)
+    
+    start = time()
+    stream = agent.stream_prompt('Tell me a story')
+    first_token = next(stream)
+    first_token_latency = time() - start
+    
+    ASSERT first_token_latency < 0.5  # 500ms
+```
+
+==== PT-2: Concurrent Requests
+
+*Test: Concurrent Execution*
+```
+TEST test_concurrent_requests():
+    agent = LocalPromptAgent(test_config)
+    
+    # Execute 10 prompts concurrently
+    WITH ThreadPoolExecutor(max_workers=10) AS executor:
+        futures = [
+            executor.submit(agent.execute_prompt, f'Prompt {i}')
+            FOR i IN RANGE(10)
+        ]
+        
+        results = [f.result(timeout=30) FOR f IN futures]
+    
+    # All should succeed
+    ASSERT len(results) == 10
+    ASSERT all(r IS NOT None FOR r IN results)
+```
+
+==== PT-3: Memory Usage
+
+*Test: Memory Leak Detection*
+```
+TEST test_memory_leak():
+    agent = LocalPromptAgent(test_config)
+    
+    initial_memory = get_memory_usage()
+    
+    # Execute many prompts
+    FOR i IN RANGE(1000):
+        agent.execute_prompt('Test message')
+    
+    final_memory = get_memory_usage()
+    memory_increase = final_memory - initial_memory
+    
+    # Memory increase should be reasonable (< 100MB)
+    ASSERT memory_increase < 100 * 1024 * 1024
+```
+
+=== 7.4 Security Tests
+
+==== ST-1: Input Validation
+
+*Test: SQL Injection Prevention*
+```
+TEST test_sql_injection_prevention():
+    manager = ConversationManager(':memory:')
+    
+    # Attempt SQL injection in conversation search
+    malicious_query = "'; DROP TABLE conversations; --"
+    
+    TRY:
+        results = manager.search(malicious_query)
+        # Should not crash
+        ASSERT True
+    CATCH Exception AS e:
+        # If it raises an error, it should be a validation error, not SQL error
+        ASSERT 'SQL' NOT IN str(e)
+```
+
+*Test: Path Traversal Prevention*
+```
+TEST test_path_traversal_prevention():
+    tool = FileReadTool()
+    
+    # Attempt path traversal
+    result = tool.execute({'file_path': '../../../etc/passwd'})
+    
+    ASSERT NOT result['success']
+    ASSERT 'not allowed' IN result['error'].lower()
+```
+
+==== ST-2: Tool Sandboxing
+
+*Test: Tool Timeout Enforcement*
+```
+TEST test_tool_timeout():
+    class SlowTool(Tool):
+        FUNCTION execute(parameters):
+            sleep(10)  # Intentionally slow
+            RETURN {'result': 'done'}
+    
+    agent = LocalPromptAgent(test_config)
+    agent.tool_registry.register(SlowTool())
+    
+    WITH ASSERT_RAISES(ToolTimeoutError):
+        agent.execute_tool('slow_tool', {}, timeout=1)
+```
+
+*Test: Resource Limits*
+```
+TEST test_tool_resource_limits():
+    class MemoryHogTool(Tool):
+        FUNCTION execute(parameters):
+            # Try to allocate 1GB
+            data = [0] * (1024 * 1024 * 1024)
+            RETURN {'result': 'done'}
+    
+    agent = LocalPromptAgent(test_config)
+    agent.tool_registry.register(MemoryHogTool())
+    
+    # Should fail or be limited
+    result = agent.execute_tool('memory_hog_tool', {})
+    ASSERT NOT result['success']
+```
+
+=== 7.5 Compatibility Tests
+
+==== CT-1: Cross-Platform
+
+*Test: Windows Path Handling*
+```
+TEST test_windows_paths():
+    IF platform == 'windows':
+        manager = ConversationManager('C:\\Users\\test\\agent.db')
+        ASSERT manager.db.path.startswith('C:\\')
+```
+
+*Test: macOS File Permissions*
+```
+TEST test_macos_permissions():
+    IF platform == 'darwin':
+        # Test that config files have correct permissions
+        config_path = create_config_file()
+        perms = os.stat(config_path).st_mode & 0o777
+        ASSERT perms == 0o600  # Owner read/write only
+```
+
+==== CT-2: LLM Backend Compatibility
+
+*Test: Ollama Compatibility*
+```
+TEST test_ollama_backend():
+    backend = OllamaBackend(ollama_config)
+    models = backend.get_available_models()
+    
+    ASSERT len(models) > 0
+    ASSERT all('name' IN model FOR model IN models)
+```
+
+*Test: OpenAI API Compatibility*
+```
+TEST test_openai_compatibility():
+    backend = OpenAIBackend(openai_config)
+    
+    response = backend.complete([
+        {'role': 'user', 'content': 'Hello'}
+    ])
+    
+    ASSERT response.content IS NOT None
+    ASSERT response.tokens_used > 0
+```
+
+=== 7.6 Document Processing and RAG Tests
+
+==== DT-1: Document Loading and Extraction
+
+*Test: PDF Text Extraction*
+```
+TEST test_pdf_text_extraction():
+    processor = DocumentProcessor(config)
+    
+    # Create test PDF
+    test_pdf = create_test_pdf("Test content on page 1.\nMore text here.")
+    
+    document = processor.process_document(test_pdf)
+    
+    ASSERT document.text IS NOT None
+    ASSERT "Test content" IN document.text
+    ASSERT document.metadata['page_count'] == 1
+```
+
+*Test: Password-Protected PDF*
+```
+TEST test_password_protected_pdf():
+    processor = DocumentProcessor(config)
+    
+    protected_pdf = create_protected_pdf("Secret content", password="test123")
+    
+    WITH ASSERT_RAISES(PasswordProtectedError):
+        processor.process_document(protected_pdf)
+```
+
+*Test: Corrupted Document*
+```
+TEST test_corrupted_document():
+    processor = DocumentProcessor(config)
+    
+    corrupted_file = create_corrupted_pdf()
+    
+    WITH ASSERT_RAISES(DocumentProcessingError):
+        processor.process_document(corrupted_file)
+```
+
+*Test: Multi-Format Support*
+```
+TEST test_multi_format_support():
+    processor = DocumentProcessor(config)
+    
+    formats = {
+        'pdf': create_test_pdf("PDF content"),
+        'docx': create_test_docx("DOCX content"),
+        'txt': create_test_txt("TXT content"),
+        'md': create_test_markdown("# Markdown content")
+    }
+    
+    FOR format, file IN formats.items():
+        document = processor.process_document(file)
+        ASSERT document.text IS NOT None
+        ASSERT len(document.text) > 0
+```
+
+==== DT-2: Document Chunking
+
+*Test: Fixed-Size Chunking*
+```
+TEST test_fixed_size_chunking():
+    chunker = DocumentChunker(chunk_size=100, chunk_overlap=20, strategy='fixed')
+    
+    document = create_test_document("A" * 500)  # 500 character document
+    chunks = chunker.chunk_document(document)
+    
+    # Should create 5 chunks with overlap
+    ASSERT len(chunks) >= 4
+    ASSERT len(chunks[0].text) <= 100
+    
+    # Check overlap
+    ASSERT chunks[0].text[-20:] IN chunks[1].text
+```
+
+*Test: Semantic Chunking*
+```
+TEST test_semantic_chunking():
+    chunker = DocumentChunker(chunk_size=200, strategy='semantic')
+    
+    text = """
+    Paragraph one is here. This is the first paragraph.
+    
+    Paragraph two starts now. This is the second paragraph.
+    
+    And finally paragraph three. This is the last one.
+    """
+    
+    document = create_test_document(text)
+    chunks = chunker.chunk_document(document)
+    
+    # Should split by paragraphs
+    ASSERT len(chunks) >= 1
+    
+    # Each chunk should be coherent
+    FOR chunk IN chunks:
+        ASSERT "\n\n" NOT IN chunk.text OR len(chunk.text) > 200
+```
+
+*Test: Empty Document Handling*
+```
+TEST test_empty_document_chunking():
+    chunker = DocumentChunker(chunk_size=100)
+    
+    empty_doc = create_test_document("")
+    chunks = chunker.chunk_document(empty_doc)
+    
+    ASSERT len(chunks) == 0
+```
+
+==== DT-3: Embedding Generation
+
+*Test: Single Text Embedding*
+```
+TEST test_single_text_embedding():
+    generator = EmbeddingGenerator(model_name='all-MiniLM-L6-v2')
+    
+    text = "This is a test sentence for embedding."
+    embedding = generator.embed_text(text)
+    
+    ASSERT embedding IS NOT None
+    ASSERT len(embedding) == 384  # Dimension for MiniLM-L6
+    ASSERT isinstance(embedding, numpy.ndarray)
+```
+
+*Test: Batch Embedding*
+```
+TEST test_batch_embedding():
+    generator = EmbeddingGenerator(model_name='all-MiniLM-L6-v2')
+    
+    texts = [f"Test sentence {i}" FOR i IN RANGE(100)]
+    embeddings = generator.embed_batch(texts, batch_size=32)
+    
+    ASSERT len(embeddings) == 100
+    ASSERT all(len(emb) == 384 FOR emb IN embeddings)
+```
+
+*Test: Embedding Caching*
+```
+TEST test_embedding_caching():
+    generator = EmbeddingGenerator(model_name='all-MiniLM-L6-v2')
+    
+    text = "Cache this embedding"
+    
+    # First call
+    start = time()
+    emb1 = generator.embed_text(text)
+    time1 = time() - start
+    
+    # Second call (should be cached)
+    start = time()
+    emb2 = generator.embed_text(text)
+    time2 = time() - start
+    
+    # Should be same embedding
+    ASSERT numpy.allclose(emb1, emb2)
+    
+    # Second call should be much faster
+    ASSERT time2 < time1 / 10
+```
+
+==== DT-4: Vector Store Operations
+
+*Test: Add and Search Documents*
+```
+TEST test_vector_store_add_search():
+    store = VectorStore(collection_name="test", backend='chromadb')
+    generator = EmbeddingGenerator()
+    
+    # Add documents
+    texts = [
+        "The quick brown fox jumps over the lazy dog",
+        "Python is a programming language",
+        "Machine learning is a subset of AI"
+    ]
+    
+    embeddings = generator.embed_batch(texts)
+    store.add_documents(
+        chunks=texts,
+        embeddings=embeddings,
+        metadatas=[{'index': i} FOR i IN RANGE(len(texts))]
+    )
+    
+    # Search
+    query = "What is Python?"
+    query_emb = generator.embed_text(query)
+    results = store.search(query_emb, k=2)
+    
+    # Should find programming-related document
+    ASSERT len(results) > 0
+    ASSERT "Python" IN results[0].text OR "programming" IN results[0].text
+```
+
+*Test: Filtered Search*
+```
+TEST test_filtered_vector_search():
+    store = VectorStore(collection_name="test", backend='chromadb')
+    generator = EmbeddingGenerator()
+    
+    # Add documents with metadata
+    texts = ["Doc about cats", "Doc about dogs", "Doc about birds"]
+    metadatas = [
+        {'category': 'cats', 'year': 2020},
+        {'category': 'dogs', 'year': 2021},
+        {'category': 'birds', 'year': 2020}
+    ]
+    
+    embeddings = generator.embed_batch(texts)
+    store.add_documents(texts, embeddings, metadatas)
+    
+    # Search with filter
+    query_emb = generator.embed_text("animals")
+    results = store.search(
+        query_emb,
+        k=3,
+        filter={'year': 2020}
+    )
+    
+    # Should only return 2020 documents
+    ASSERT len(results) == 2
+    ASSERT all(r.metadata['year'] == 2020 FOR r IN results)
+```
+
+*Test: Hybrid Search*
+```
+TEST test_hybrid_search():
+    store = VectorStore(collection_name="test", backend='chromadb')
+    generator = EmbeddingGenerator()
+    
+    texts = [
+        "Python programming language",
+        "Java programming language",
+        "Snake in the grass"
+    ]
+    
+    embeddings = generator.embed_batch(texts)
+    store.add_documents(texts, embeddings, [{}] * len(texts))
+    
+    # Hybrid search
+    query = "Python"
+    query_emb = generator.embed_text(query)
+    results = store.hybrid_search(query, query_emb, k=2, alpha=0.5)
+    
+    # Should prioritize exact keyword match
+    ASSERT "Python programming" IN results[0].text
+```
+
+==== DT-5: End-to-End RAG
+
+*Test: Simple RAG Query*
+```
+TEST test_simple_rag_query():
+    rag_system = RAGSystem(test_config)
+    rag_system.llm_backend = MockLLMBackend()
+    
+    # Index a test document
+    test_doc = create_test_pdf("""
+        Python is a high-level programming language.
+        It was created by Guido van Rossum in 1991.
+        Python emphasizes code readability.
+    """)
+    
+    rag_system.index_document(test_doc)
+    
+    # Query
+    response = rag_system.query("Who created Python?")
+    
+    # Should contain answer
+    ASSERT "Guido van Rossum" IN response
+    ASSERT "Sources:" IN response  # Should include citations
+```
+
+*Test: Multi-Document RAG*
+```
+TEST test_multi_document_rag():
+    rag_system = RAGSystem(test_config)
+    rag_system.llm_backend = MockLLMBackend()
+    
+    # Index multiple documents
+    doc1 = create_test_pdf("Python was created in 1991.")
+    doc2 = create_test_pdf("Python is used for web development.")
+    doc3 = create_test_pdf("Python has a large ecosystem of libraries.")
+    
+    rag_system.index_document(doc1)
+    rag_system.index_document(doc2)
+    rag_system.index_document(doc3)
+    
+    # Query across documents
+    response = rag_system.query("What are Python's characteristics?")
+    
+    # Should synthesize information from multiple documents
+    ASSERT response IS NOT None
+    ASSERT len(response) > 0
+```
+
+*Test: RAG with No Relevant Documents*
+```
+TEST test_rag_no_relevant_docs():
+    rag_system = RAGSystem(test_config)
+    rag_system.llm_backend = MockLLMBackend()
+    
+    # Index unrelated document
+    doc = create_test_pdf("Information about coffee brewing methods.")
+    rag_system.index_document(doc)
+    
+    # Query unrelated topic
+    response = rag_system.query("What is quantum computing?")
+    
+    # Should indicate insufficient information
+    ASSERT "don't have" IN response.lower() OR "no information" IN response.lower()
+```
+
+*Test: RAG Context Window Management*
+```
+TEST test_rag_context_window_limit():
+    config = test_config.copy()
+    config['chunk_size'] = 5000  # Large chunks
+    
+    rag_system = RAGSystem(config)
+    rag_system.llm_backend = MockLLMBackend(max_tokens=4096)
+    
+    # Index large document
+    large_text = "A" * 100000  # Very large document
+    doc = create_test_pdf(large_text)
+    
+    rag_system.index_document(doc)
+    
+    # Query should not exceed context window
+    response = rag_system.query("What is this about?")
+    
+    # Should complete without context overflow error
+    ASSERT response IS NOT None
+```
+
+==== DT-6: Performance Tests
+
+*Test: Large Document Indexing Performance*
+```
+TEST test_large_document_indexing_performance():
+    rag_system = RAGSystem(test_config)
+    
+    # Create 100-page document
+    text = "Page content. " * 500  # ~50k characters
+    doc = create_test_pdf(text)
+    
+    start = time()
+    result = rag_system.index_document(doc)
+    duration = time() - start
+    
+    # Should complete in reasonable time
+    ASSERT duration < 60  # 1 minute max for 100 pages
+    ASSERT result['num_chunks'] > 0
+```
+
+*Test: Embedding Generation Performance*
+```
+TEST test_embedding_batch_performance():
+    generator = EmbeddingGenerator()
+    
+    # 1000 chunks
+    texts = [f"Test chunk number {i} with some content" FOR i IN RANGE(1000)]
+    
+    start = time()
+    embeddings = generator.embed_batch(texts, batch_size=32)
+    duration = time() - start
+    
+    # Should process efficiently
+    ASSERT duration < 30  # 30 seconds for 1000 chunks
+    ASSERT len(embeddings) == 1000
+```
+
+*Test: Vector Search Performance*
+```
+TEST test_vector_search_performance():
+    store = VectorStore(collection_name="perf_test", backend='chromadb')
+    generator = EmbeddingGenerator()
+    
+    # Index 10,000 documents
+    texts = [f"Document {i} with content" FOR i IN RANGE(10000)]
+    embeddings = generator.embed_batch(texts)
+    store.add_documents(texts, embeddings, [{}] * len(texts))
+    
+    # Search performance
+    query_emb = generator.embed_text("test query")
+    
+    start = time()
+    results = store.search(query_emb, k=10)
+    duration = time() - start
+    
+    # Should be fast even with large collection
+    ASSERT duration < 0.5  # 500ms max
+    ASSERT len(results) == 10
+```
+
+==== DT-7: Edge Cases
+
+*Test: Unicode and Special Characters*
+```
+TEST test_unicode_document_processing():
+    processor = DocumentProcessor(config)
+    
+    # Document with various Unicode characters
+    content = "English text. 中文文本. العربية. עברית. Emoji: 😀🎉"
+    doc = create_test_pdf(content)
+    
+    result = processor.process_document(doc)
+    
+    ASSERT "中文" IN result.text
+    ASSERT "العربية" IN result.text
+    ASSERT "😀" IN result.text
+```
+
+*Test: Very Small Documents*
+```
+TEST test_tiny_document():
+    rag_system = RAGSystem(test_config)
+    
+    # Single sentence document
+    doc = create_test_pdf("Python is great.")
+    result = rag_system.index_document(doc)
+    
+    ASSERT result['num_chunks'] >= 1
+```
+
+*Test: Document with Tables*
+```
+TEST test_document_with_tables():
+    processor = DocumentProcessor(config)
+    
+    # Create PDF with table
+    pdf_with_table = create_pdf_with_table([
+        ['Name', 'Age', 'City'],
+        ['Alice', '30', 'NYC'],
+        ['Bob', '25', 'SF']
+    ])
+    
+    document = processor.process_document(pdf_with_table)
+    
+    ASSERT document.tables IS NOT None
+    ASSERT len(document.tables) > 0
+    ASSERT 'Alice' IN str(document.tables)
+```
+
+== 8. Error Handling
+
+=== 8.1 Error Classification
+
+==== 8.1.1 User Errors
+Errors caused by invalid user input or configuration.
+
+*Characteristics:*
+
+* Should provide clear, actionable error messages
+* Should not crash the application
+* Should suggest corrections
+* Log at INFO or WARN level
+
+*Examples:*
+
+* Invalid configuration file
+* Missing required parameters
+* Malformed prompt template
+
+==== 8.1.2 System Errors
+Errors caused by system resource issues or external dependencies.
+
+*Characteristics:*
+
+* May be transient (retry possible)
+* Should attempt automatic recovery
+* Should provide fallback behavior
+* Log at ERROR level
+
+*Examples:*
+
+* Database connection failure
+* Disk space exhausted
+* Network timeout
+
+==== 8.1.3 Backend Errors
+Errors from LLM backends.
+
+*Characteristics:*
+
+* May indicate backend health issues
+* Should trigger failover if available
+* Should cache for circuit breaker
+* Log at ERROR level
+
+*Examples:*
+
+* Model not found
+* Backend timeout
+* Rate limit exceeded
+
+==== 8.1.4 Internal Errors
+Bugs or unexpected conditions in the application.
+
+*Characteristics:*
+
+* Should never occur in production
+* Should be logged with full context
+* Should generate crash reports
+* Log at CRITICAL level
+
+*Examples:*
+
+* Unhandled exceptions
+* Assertion failures
+* Logic errors
+
+=== 8.2 Error Handling Patterns
+
+==== Pattern 1: Graceful Degradation
+```
+FUNCTION execute_with_degradation(operation, fallback):
+    TRY:
+        RETURN operation()
+    CATCH NonCriticalError AS e:
+        log_warning(f"Operation failed, using fallback: {e}")
+        RETURN fallback()
+    CATCH CriticalError AS e:
+        log_error(f"Critical error: {e}")
+        RAISE
+```
+
+==== Pattern 2: Retry with Backoff
+```
+FUNCTION retry_with_backoff(operation, max_attempts=3, base_delay=1):
+    FOR attempt IN RANGE(1, max_attempts + 1):
+        TRY:
+            RETURN operation()
+        CATCH RetryableError AS e:
+            IF attempt == max_attempts:
+                RAISE
+            
+            delay = base_delay * (2 ** (attempt - 1))  # Exponential backoff
+            log_warning(f"Attempt {attempt} failed, retrying in {delay}s: {e}")
+            sleep(delay)
+```
+
+==== Pattern 3: Circuit Breaker
+```
+CLASS CircuitBreaker:
+    STATES = ['CLOSED', 'OPEN', 'HALF_OPEN']
+    
+    CONSTRUCTOR(failure_threshold=5, timeout=60):
+        self.failure_threshold = failure_threshold
+        self.timeout = timeout
+        self.failure_count = 0
+        self.state = 'CLOSED'
+        self.last_failure_time = None
+    
+    FUNCTION call(operation):
+        IF self.state == 'OPEN':
+            IF now() - self.last_failure_time >= self.timeout:
+                self.state = 'HALF_OPEN'
+                log_info("Circuit breaker: OPEN -> HALF_OPEN")
+            ELSE:
+                RAISE CircuitBreakerOpenError("Circuit breaker is OPEN")
+        
+        TRY:
+            result = operation()
+            
+            IF self.state == 'HALF_OPEN':
+                self.state = 'CLOSED'
+                self.failure_count = 0
+                log_info("Circuit breaker: HALF_OPEN -> CLOSED")
+            
+            RETURN result
+        
+        CATCH Exception AS e:
+            self.failure_count += 1
+            self.last_failure_time = now()
+            
+            IF self.failure_count >= self.failure_threshold:
+                self.state = 'OPEN'
+                log_error(f"Circuit breaker: CLOSED -> OPEN (failures={self.failure_count})")
+            
+            RAISE
+```
+
+==== Pattern 4: Bulkhead Isolation
+```
+CLASS Bulkhead:
+    """
+    Isolate resources to prevent cascading failures
+    """
+    
+    CONSTRUCTOR(max_concurrent, max_queue_size):
+        self.semaphore = Semaphore(max_concurrent)
+        self.queue = Queue(maxsize=max_queue_size)
+    
+    FUNCTION execute(operation):
+        IF self.queue.full():
+            RAISE BulkheadFullError("Bulkhead queue is full")
+        
+        WITH self.semaphore:
+            RETURN operation()
+```
+
+=== 8.3 Error Response Format
+
+==== 8.3.1 API Error Response
+```json
+{
+  "error": {
+    "code": "BACKEND_TIMEOUT",
+    "message": "LLM backend request timed out after 30 seconds",
+    "details": {
+      "backend": "ollama",
+      "model": "llama2",
+      "timeout": 30
+    },
+    "suggestions": [
+      "Check if Ollama is running: 'ollama serve'",
+      "Increase timeout in configuration",
+      "Try a different backend"
+    ],
+    "timestamp": "2026-01-10T12:00:00Z",
+    "request_id": "req_abc123"
+  }
+}
+```
+
+==== 8.3.2 CLI Error Format
+```
+ERROR: LLM backend request timed out
+
+Details:
+  Backend: ollama
+  Model: llama2
+  Timeout: 30 seconds
+
+Possible solutions:
+  1. Check if Ollama is running:
+     $ ollama serve
+  
+  2. Increase timeout in config.yaml:
+     backend:
+       timeout: 60
+  
+  3. Try a different backend
+
+For more information, see logs at:
+  ~/.local-prompt-agent/logs/error.log
+
+Request ID: req_abc123
+```
+
+=== 8.4 Logging Strategy
+
+==== 8.4.1 Log Levels
+
+*DEBUG*: Detailed information for diagnosing problems
+```
+DEBUG: Sending request to backend
+  URL: http://localhost:11434/api/chat
+  Payload: {"model": "llama2", "messages": [...]}
+```
+
+*INFO*: General informational messages
+```
+INFO: Conversation created: conv_abc123
+INFO: Tool executed: read_file (100ms)
+```
+
+*WARNING*: Indicates a potential problem
+```
+WARNING: Cache near size limit (950/1000)
+WARNING: Context window at 90% capacity
+```
+
+*ERROR*: Error that doesn't stop execution
+```
+ERROR: Failed to connect to backend 'ollama', trying fallback
+  Reason: Connection refused
+```
+
+*CRITICAL*: Serious error that may cause shutdown
+```
+CRITICAL: Database corruption detected
+  File: /path/to/agent.db
+  Action: Attempting recovery
+```
+
+==== 8.4.2 Structured Logging
+
+```json
+{
+  "timestamp": "2026-01-10T12:00:00Z",
+  "level": "ERROR",
+  "logger": "local_prompt_agent.backend",
+  "message": "Backend request failed",
+  "context": {
+    "backend": "ollama",
+    "model": "llama2",
+    "conversation_id": "conv_abc123",
+    "request_id": "req_xyz789",
+    "error": "Connection timeout",
+    "duration_ms": 30000
+  },
+  "stack_trace": "..."
+}
+```
+
+=== 8.5 Error Recovery Procedures
+
+==== Recovery 1: Database Corruption
+
+```
+PROCEDURE recover_database():
+    1. Detect corruption (integrity check fails)
+    2. Log critical error with database path
+    3. Create backup of corrupted database
+    4. Attempt SQLite recovery: sqlite3 .recover
+    5. IF recovery successful:
+         a. Create new database
+         b. Import recovered data
+         c. Validate data integrity
+         d. Resume operation
+       ELSE:
+         a. Restore from last backup (if exists)
+         b. OR create new empty database
+         c. Alert user of data loss
+    6. Log recovery outcome
+```
+
+==== Recovery 2: Configuration Failure
+
+```
+PROCEDURE recover_configuration():
+    1. Detect invalid configuration
+    2. Log specific validation errors
+    3. Try last known good configuration (if cached)
+    4. IF no cached config:
+         a. Generate default configuration
+         b. Save to config.yaml.default
+         c. Prompt user to review and customize
+    5. Continue with recovered/default config
+    6. Notify user of configuration issues
+```
+
+==== Recovery 3: Memory Exhaustion
+
+```
+PROCEDURE handle_memory_exhaustion():
+    1. Detect high memory usage (>80% of limit)
+    2. Log warning with memory stats
+    3. Trigger emergency cleanup:
+         a. Clear response cache
+         b. Release inactive conversation objects
+         c. Force garbage collection
+    4. IF still above threshold:
+         a. Reject new requests (503 response)
+         b. Complete existing requests
+         c. Reduce resource limits
+    5. Monitor recovery
+    6. Resume normal operation when memory < 60%
+```
+
+== 9. Programming Language Recommendation
+
+=== 9.1 Analysis of Requirements
+
+Based on the functional and non-functional requirements, the ideal programming language should provide:
+
+1. *Strong async/concurrency support* - Multiple concurrent conversations
+2. *Rich ecosystem for AI/ML* - LLM integrations, embeddings, vector operations
+3. *Cross-platform compatibility* - Linux, macOS, Windows
+4. *Performance* - Low latency, efficient resource usage
+5. *Developer productivity* - Rapid development, good tooling
+6. *Type safety* - Reduce bugs, improve maintainability
+7. *Package management* - Easy dependency management
+8. *Community support* - Active development, libraries
+
+=== 9.2 Recommended: Python 3.11+
+
+*Primary Recommendation: Python with asyncio and type hints*
+
+==== Justification:
+
+*Strengths:*
+
+1. **Ecosystem Excellence**
+   * Comprehensive LLM libraries: `openai`, `anthropic`, `ollama`, `llama-cpp-python`
+   * Vector operations: `numpy`, `scipy`
+   * Embeddings: `sentence-transformers`, `chromadb`
+   * Web frameworks: `fastapi`, `aiohttp`
+   * CLI tools: `click`, `rich`, `typer`
+
+2. **Async Support**
+   * Native `asyncio` for concurrent operations
+   * `aiohttp` for async HTTP requests
+   * `asyncpg` for async database operations
+
+3. **Type Safety**
+   * Type hints + `mypy` for static type checking
+   * `pydantic` for runtime validation
+   * Modern Python emphasizes type safety
+
+4. **Performance**
+   * Python 3.11+ has 10-25% performance improvements
+   * Can use `Cython` or `mypyc` for hot paths
+   * Native extensions for heavy computation
+
+5. **Developer Experience**
+   * Rapid prototyping
+   * Excellent documentation
+   * Large talent pool
+   * Great debugging tools
+
+6. **Deployment**
+   * `PyInstaller` for standalone binaries
+   * Easy containerization with Docker
+   * Multi-platform package with `pip`
+
+*Weaknesses:*
+
+1. Global Interpreter Lock (GIL) - mitigated by asyncio
+2. Performance vs compiled languages - acceptable for I/O bound workloads
+3. Packaging complexity - improved with modern tools
+
+==== Recommended Tech Stack:
+
+```yaml
+language: Python 3.11+
+
+core_libraries:
+  - fastapi: "^0.104.0"  # REST API
+  - click: "^8.1.7"  # CLI interface
+  - rich: "^13.7.0"  # Terminal formatting
+  - pydantic: "^2.5.0"  # Data validation
+  - sqlalchemy: "^2.0.0"  # Database ORM
+  - aiohttp: "^3.9.0"  # Async HTTP
+  - asyncio: Built-in  # Async support
+
+ai_ml_libraries:
+  - openai: "^1.3.0"  # OpenAI API
+  - ollama-python: "^0.1.0"  # Ollama client
+  - llama-cpp-python: "^0.2.0"  # llama.cpp bindings
+  - sentence-transformers: "^2.2.0"  # Embeddings
+  - tiktoken: "^0.5.0"  # Token counting
+
+document_processing:
+  - pdfplumber: "^0.10.3"  # PDF text & table extraction
+  - PyMuPDF: "^1.23.8"  # Fast PDF processing (fitz)
+  - python-docx: "^1.1.0"  # DOCX file support
+  - python-pptx: "^0.6.23"  # PowerPoint support
+  - markdown: "^3.5.0"  # Markdown processing
+  - beautifulsoup4: "^4.12.0"  # HTML parsing
+  - pytesseract: "^0.3.10"  # OCR engine (optional)
+  - pillow: "^10.1.0"  # Image processing for OCR
+
+rag_vector_stores:
+  - chromadb: "^0.4.18"  # Local vector database
+  - faiss-cpu: "^1.7.4"  # Fast similarity search
+  - numpy: "^1.26.0"  # Vector operations
+  - langchain: "^0.1.0"  # RAG utilities (optional)
+  - langchain-community: "^0.0.10"  # Community integrations
+
+storage:
+  - sqlalchemy: "^2.0.0"  # ORM
+  - alembic: "^1.13.0"  # Migrations
+  - aiosqlite: "^0.19.0"  # Async SQLite
+
+testing:
+  - pytest: "^7.4.0"
+  - pytest-asyncio: "^0.21.0"
+  - pytest-cov: "^4.1.0"
+  - hypothesis: "^6.92.0"  # Property-based testing
+
+development:
+  - black: "^23.12.0"  # Code formatting
+  - ruff: "^0.1.7"  # Linting
+  - mypy: "^1.7.0"  # Type checking
+  - pre-commit: "^3.6.0"  # Git hooks
+
+deployment:
+  - uvicorn: "^0.25.0"  # ASGI server
+  - gunicorn: "^21.2.0"  # Process manager
+  - docker: Containerization
+  - pyinstaller: "^6.3.0"  # Binary packaging
+```
+
+==== Project Structure:
+
+```
+local-prompt-agent/
+├── pyproject.toml              # Project metadata & dependencies
+├── README.md
+├── specification.adoc          # This file
+├── src/
+│   └── local_prompt_agent/
+│       ├── __init__.py
+│       ├── __main__.py         # CLI entry point
+│       ├── agent.py            # Main agent class
+│       ├── backends/
+│       │   ├── __init__.py
+│       │   ├── base.py         # Abstract backend
+│       │   ├── ollama.py
+│       │   ├── llama_cpp.py
+│       │   └── openai.py
+│       ├── conversation/
+│       │   ├── __init__.py
+│       │   ├── manager.py
+│       │   ├── context.py      # Context window management
+│       │   └── models.py       # Data models
+│       ├── tools/
+│       │   ├── __init__.py
+│       │   ├── registry.py
+│       │   ├── base.py
+│       │   └── builtin/
+│       │       ├── file_ops.py
+│       │       ├── calculator.py
+│       │       ├── web.py
+│       │       └── document.py  # Document processing tools
+│       ├── document/
+│       │   ├── __init__.py
+│       │   ├── processor.py     # Document loading & extraction
+│       │   ├── chunker.py       # Text chunking strategies
+│       │   ├── ocr.py          # OCR support
+│       │   └── parsers/
+│       │       ├── pdf.py
+│       │       ├── docx.py
+│       │       └── html.py
+│       ├── rag/
+│       │   ├── __init__.py
+│       │   ├── embeddings.py    # Embedding generation
+│       │   ├── vector_store.py  # Vector storage interface
+│       │   ├── retrieval.py     # Retrieval strategies
+│       │   ├── rag_system.py    # Complete RAG system
+│       │   └── reranker.py      # Result reranking
+│       ├── api/
+│       │   ├── __init__.py
+│       │   ├── app.py          # FastAPI application
+│       │   └── routes/
+│       │       ├── chat.py
+│       │       ├── conversations.py
+│       │       └── tools.py
+│       ├── cli/
+│       │   ├── __init__.py
+│       │   ├── main.py         # Click CLI
+│       │   └── repl.py         # Interactive mode
+│       ├── storage/
+│       │   ├── __init__.py
+│       │   ├── database.py
+│       │   └── cache.py
+│       └── utils/
+│           ├── __init__.py
+│           ├── logging.py
+│           ├── config.py
+│           └── tokens.py
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   ├── performance/
+│   └── conftest.py
+├── docs/
+│   ├── architecture.md
+│   ├── api.md
+│   └── user_guide.md
+├── config/
+│   ├── config.yaml.example
+│   └── logging.yaml
+└── scripts/
+    ├── setup.sh
+    └── benchmark.py
+```
+
+=== 9.3 Alternative: Rust
+
+*Secondary Recommendation: Rust for performance-critical deployments*
+
+==== When to Choose Rust:
+
+* Extremely high performance requirements
+* Minimal resource footprint needed
+* Mission-critical reliability
+* Team has Rust expertise
+
+==== Rust Tech Stack:
+
+```toml
+[dependencies]
+tokio = { version = "1.35", features = ["full"] }  # Async runtime
+axum = "0.7"  # Web framework
+sqlx = "0.7"  # Async SQL
+serde = "1.0"  # Serialization
+clap = "4.4"  # CLI parsing
+reqwest = "0.11"  # HTTP client
+ollama-rs = "0.1"  # Ollama bindings
+```
+
+*Pros:*
+* Exceptional performance
+* Memory safety without GC
+* Excellent concurrency
+* Single binary deployment
+
+*Cons:*
+* Steeper learning curve
+* Longer development time
+* Less mature AI/ML ecosystem
+* Smaller talent pool
+
+=== 9.4 Alternative: Go
+
+*Tertiary Recommendation: Go for simplicity and deployment*
+
+==== When to Choose Go:
+
+* Simple deployment requirements
+* Team preference for Go
+* Need for extreme portability
+* Network-heavy workloads
+
+==== Go Tech Stack:
+
+```go
+// Key packages
+github.com/gin-gonic/gin  // Web framework
+github.com/spf13/cobra  // CLI
+github.com/jmoiron/sqlx  // SQL
+github.com/go-resty/resty  // HTTP client
+```
+
+*Pros:*
+* Simple concurrency (goroutines)
+* Fast compilation
+* Excellent deployment story
+* Good performance
+
+*Cons:*
+* Limited AI/ML libraries
+* No built-in generics for older versions
+* Less expressive than Python/Rust
+* Verbose error handling
+
+=== 9.5 Final Recommendation
+
+**Choose Python 3.11+ for this project**
+
+*Reasons:*
+
+1. **Best ecosystem fit** - Unmatched AI/ML library support
+2. **Rapid development** - Faster time to market
+3. **Team productivity** - Easier to find developers
+4. **Sufficient performance** - Async Python handles I/O-bound workloads well
+5. **Flexibility** - Easy to prototype and iterate
+
+*Performance Optimization Strategy:*
+
+* Use `asyncio` for concurrency
+* Profile and optimize hot paths
+* Consider `Cython` for CPU-intensive operations
+* Use compiled libraries (`numpy`, `pandas`) where applicable
+* Implement efficient caching
+* Optimize database queries
+
+*Future Migration Path:*
+
+If performance becomes critical:
+1. Identify bottlenecks through profiling
+2. Rewrite specific components in Rust (via `PyO3`)
+3. Keep Python for high-level logic
+4. Gradually migrate critical paths
+
+== 10. Implementation Roadmap
+
+=== Phase 1: Foundation (Weeks 1-2)
+* Set up project structure
+* Implement basic LLM backend abstraction
+* Create conversation management
+* Basic CLI interface
+
+=== Phase 2: Core Features (Weeks 3-4)
+* Implement tool registry
+* Add built-in tools
+* Context window management
+* Response caching
+
+=== Phase 3: API & Advanced Features (Weeks 5-6)
+* REST API with FastAPI
+* Prompt templates
+* Prompt chaining
+* Advanced caching strategies
+
+=== Phase 4: Polish & Testing (Weeks 7-8)
+* Comprehensive test suite
+* Documentation
+* Performance optimization
+* Security hardening
+
+=== Phase 5: Deployment (Week 9-10)
+* Packaging (PyPI, Docker, binaries)
+* CI/CD setup
+* Monitoring and logging
+* User documentation
+
+== 11. Success Criteria
+
+The Local Prompt Agent project will be considered successful when:
+
+1. **Functional Completeness**
+   * All high-priority requirements implemented
+   * Support for at least 2 LLM backends
+   * At least 5 built-in tools working
+
+2. **Performance Targets**
+   * API response time < 100ms (p95, excluding LLM)
+   * Support 10 concurrent conversations
+   * Memory footprint < 500MB idle
+
+3. **Quality Metrics**
+   * Test coverage > 80%
+   * Zero critical security vulnerabilities
+   * Documentation complete and clear
+
+4. **User Satisfaction**
+   * Successful installation on all target platforms
+   * Positive feedback from beta users
+   * Clear error messages and troubleshooting
+
+5. **Production Readiness**
+   * Stable for 24-hour continuous operation
+   * Graceful handling of all error scenarios
+   * Comprehensive logging and monitoring
+
+== 12. Appendices
+
+=== Appendix A: Glossary
+
+[cols="1,3"]
+|===
+|Term |Definition
+
+|Agent |Autonomous software system that can perform tasks
+|Agentic Workflow |Multi-step process where agent decides actions
+|Context Window |Maximum tokens LLM can process at once
+|Embedding |Dense vector representation of text
+|Function Calling |LLM capability to invoke external tools
+|Hallucination |LLM generating factually incorrect information
+|Inference |Process of generating LLM output
+|Prompt Engineering |Craft of designing effective prompts
+|RAG |Retrieval-Augmented Generation
+|Token |Basic unit of text for LLMs (≈0.75 words)
+|Temperature |Controls randomness in LLM outputs (0=deterministic, 1=creative)
+|Top-P |Nucleus sampling parameter for controlling output diversity
+|===
+
+=== Appendix B: References
+
+1. OpenAI API Documentation: https://platform.openai.com/docs
+2. Ollama Documentation: https://ollama.ai/docs
+3. LangChain Documentation: https://python.langchain.com/docs
+4. FastAPI Documentation: https://fastapi.tiangolo.com
+5. Anthropic Claude API: https://docs.anthropic.com
+6. llama.cpp: https://github.com/ggerganov/llama.cpp
+
+=== Appendix C: Configuration Example
+
+```yaml
+# config.yaml - Local Prompt Agent Configuration
+
+# LLM Backend Configuration
+backend:
+  # Primary backend
+  primary:
+    type: ollama
+    base_url: http://localhost:11434
+    model: llama2
+    timeout: 60
+    max_tokens: 4096
+  
+  # Fallback backend (optional)
+  fallback:
+    type: openai
+    api_key: ${OPENAI_API_KEY}
+    model: gpt-3.5-turbo
+    timeout: 30
+
+# Conversation Settings
+conversation:
+  # Context window management strategy
+  overflow_strategy: truncation  # Options: truncation, summarization, semantic
+  
+  # Maximum messages to keep in memory
+  max_messages: 100
+  
+  # Database path
+  db_path: ~/.local-prompt-agent/conversations.db
+  
+  # Auto-save interval (seconds)
+  auto_save_interval: 30
+
+# Cache Settings
+cache:
+  enabled: true
+  ttl: 3600  # 1 hour
+  max_size: 1000
+  semantic_matching: true
+  similarity_threshold: 0.95
+
+# Tool Settings
+tools:
+  # Enable/disable built-in tools
+  builtin:
+    file_operations: true
+    calculator: true
+    web_search: false  # Requires API key
+    code_execution: false  # Disabled by default for security
+  
+  # Tool execution limits
+  timeout: 30
+  max_concurrent: 5
+  
+  # Sandboxing
+  sandbox:
+    enabled: true
+    allow_network: false
+    allow_filesystem: true
+    max_memory_mb: 512
+
+# API Settings
+api:
+  host: 127.0.0.1
+  port: 8000
+  workers: 4
+  
+  # Authentication
+  auth:
+    enabled: false
+    api_key: ${API_KEY}
+  
+  # Rate limiting
+  rate_limit:
+    enabled: true
+    requests_per_minute: 60
+
+# CLI Settings
+cli:
+  # Color output
+  color: true
+  
+  # Show token counts
+  show_tokens: false
+  
+  # Auto-save conversations
+  auto_save: true
+
+# Logging
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: json  # json or text
+  file: ~/.local-prompt-agent/logs/agent.log
+  max_size_mb: 100
+  backup_count: 5
+
+# Performance
+performance:
+  # Thread pool size
+  max_workers: 10
+  
+  # Connection pool size
+  connection_pool_size: 20
+  
+  # Request queue size
+  queue_size: 100
+
+# Security
+security:
+  # Encrypt stored conversations
+  encrypt_at_rest: false
+  encryption_key_path: ~/.local-prompt-agent/.key
+  
+  # Allowed IPs for API (empty = all)
+  allowed_ips: []
+```
+
+=== Appendix D: Example Tool Definition
+
+```python
+from typing import Dict, Any
+from local_prompt_agent.tools import Tool
+
+class WebSearchTool(Tool):
+    """
+    Tool for searching the web using DuckDuckGo
+    """
+    
+    def __init__(self):
+        super().__init__(
+            name="web_search",
+            description=(
+                "Search the web for information. "
+                "Returns a list of search results with titles, "
+                "snippets, and URLs."
+            ),
+            parameters_schema={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query"
+                    },
+                    "num_results": {
+                        "type": "integer",
+                        "description": "Number of results to return",
+                        "default": 5,
+                        "minimum": 1,
+                        "maximum": 10
+                    }
+                },
+                "required": ["query"]
+            },
+            permissions=["network"]
+        )
+    
+    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute web search
+        """
+        query = parameters["query"]
+        num_results = parameters.get("num_results", 5)
+        
+        try:
+            # Use DuckDuckGo for privacy-friendly search
+            from duckduckgo_search import DDGS
+            
+            results = []
+            with DDGS() as ddgs:
+                for i, result in enumerate(ddgs.text(query, max_results=num_results)):
+                    results.append({
+                        "title": result["title"],
+                        "snippet": result["body"],
+                        "url": result["href"]
+                    })
+            
+            return {
+                "success": True,
+                "query": query,
+                "num_results": len(results),
+                "results": results
+            }
+        
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Search failed: {str(e)}"
+            }
+```
+
+---
+
+**END OF SPECIFICATION**
+
+*Document Version: {version}*  
+*Last Updated: {date}*  
+*Status: Draft*

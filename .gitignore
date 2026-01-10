@@ -1,0 +1,68 @@
+# Temporary files - do not commit
+# temp/ stores session change logs and work-in-progress summaries
+# Move completed summaries to summary/ before committing
+temp/*
+!temp/.gitkeep
+!temp/README.md
+!temp/TEMPLATE_session.md
+!temp/HOWTO_track_changes.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/
+
+# Local configuration
+.env
+.env.local
+config.local.yaml
+
+# Vector stores and databases
+*.db
+*.sqlite
+*.sqlite3
+vector_store/
+
+# Cache
+.cache/
+*.cache
