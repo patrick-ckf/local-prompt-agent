@@ -32,6 +32,32 @@
                 <span>New Chat</span>
             </button>
             
+            <!-- PDF Upload Section -->
+            <div class="upload-section">
+                <label for="pdfUpload" class="upload-button">
+                    <span>📄</span>
+                    <span>Upload PDF</span>
+                    <input type="file" id="pdfUpload" accept=".pdf" style="display:none;">
+                </label>
+                
+                <!-- RAG Toggle -->
+                <div class="rag-toggle">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="ragToggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="toggle-label">RAG Mode</span>
+                </div>
+            </div>
+            
+            <!-- Indexed Documents -->
+            <div class="indexed-docs" id="indexedDocs">
+                <h3 class="section-title">Indexed Documents</h3>
+                <div id="docsList" class="docs-list">
+                    <!-- Documents will be populated here -->
+                </div>
+            </div>
+            
             <nav class="chat-history" id="chatHistory">
                 <!-- Chat history will be populated here -->
             </nav>

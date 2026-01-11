@@ -4,6 +4,7 @@
 // State
 let currentTheme = localStorage.getItem('theme') || 'light';
 let language = localStorage.getItem('language') || 'en';
+let ragEnabled = false;
 let ws = null;
 
 // Elements
@@ -18,6 +19,9 @@ const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('overlay');
 const newChatButton = document.getElementById('newChatButton');
 const charCount = document.getElementById('charCount');
+const pdfUpload = document.getElementById('pdfUpload');
+const ragToggle = document.getElementById('ragToggle');
+const docsList = document.getElementById('docsList');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -37,6 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
     menuButton.addEventListener('click', toggleSidebar);
     overlay.addEventListener('click', toggleSidebar);
     newChatButton.addEventListener('click', newChat);
+    pdfUpload.addEventListener('change', handlePDFUpload);
+    ragToggle.addEventListener('change', toggleRAG);
+    
+    // Load indexed documents
+    loadIndexedDocuments();
 });
 
 // Handle input
@@ -103,10 +112,11 @@ async function streamResponse(message) {
         ws = new WebSocket(wsUrl);
         
         ws.onopen = () => {
-            // Send message
+            // Send message with RAG mode
             ws.send(JSON.stringify({
                 message: message,
-                agent: 'default'
+                agent: 'default',
+                use_rag: ragEnabled
             }));
         };
         
@@ -258,6 +268,101 @@ function newChat() {
     
     // Clear backend history
     fetch('/api/clear', { method: 'POST' });
+}
+
+// Handle PDF upload
+async function handlePDFUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Show progress
+    const progressDiv = document.createElement('div');
+    progressDiv.className = 'upload-progress';
+    progressDiv.textContent = `📄 Uploading ${file.name}...`;
+    docsList.prepend(progressDiv);
+    
+    try {
+        // Upload file
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch('/api/rag/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            progressDiv.textContent = `✓ Indexed: ${result.file_name} (${result.page_count} pages, ${result.num_chunks} chunks)`;
+            progressDiv.style.background = '#00c853';
+            
+            // Reload documents list
+            setTimeout(() => {
+                progressDiv.remove();
+                loadIndexedDocuments();
+            }, 2000);
+            
+            // Enable RAG mode
+            ragToggle.checked = true;
+            ragEnabled = true;
+        } else {
+            progressDiv.textContent = `✗ Error: ${result.message}`;
+            progressDiv.style.background = '#ff3d00';
+            setTimeout(() => progressDiv.remove(), 3000);
+        }
+        
+    } catch (error) {
+        progressDiv.textContent = `✗ Upload failed: ${error.message}`;
+        progressDiv.style.background = '#ff3d00';
+        setTimeout(() => progressDiv.remove(), 3000);
+    }
+    
+    // Reset file input
+    event.target.value = '';
+}
+
+// Toggle RAG mode
+function toggleRAG() {
+    ragEnabled = ragToggle.checked;
+    
+    // Visual feedback
+    if (ragEnabled) {
+        console.log('RAG mode enabled');
+        // Could add visual indicator to input area
+    } else {
+        console.log('RAG mode disabled');
+    }
+}
+
+// Load indexed documents
+async function loadIndexedDocuments() {
+    try {
+        const response = await fetch('/api/rag/documents');
+        const result = await response.json();
+        
+        if (result.success && result.documents.length > 0) {
+            // Clear list
+            docsList.innerHTML = '';
+            
+            // Add each document
+            result.documents.forEach(doc => {
+                const docDiv = document.createElement('div');
+                docDiv.className = 'doc-item';
+                docDiv.innerHTML = `
+                    <span class="doc-icon">📄</span>
+                    <span class="doc-name" title="${doc.file_name}">${doc.file_name}</span>
+                    <span class="doc-stats">${doc.pages}p</span>
+                `;
+                docsList.appendChild(docDiv);
+            });
+        } else {
+            docsList.innerHTML = '<div style="font-size: 12px; color: var(--text-secondary); padding: 8px;">No documents yet</div>';
+        }
+        
+    } catch (error) {
+        console.error('Error loading documents:', error);
+    }
 }
 
 // Focus input on load

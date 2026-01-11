@@ -8,7 +8,7 @@ Simple REST API following Rule #1: Keep it simple.
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -134,9 +134,19 @@ def create_app(config_path: Optional[Path] = None) -> FastAPI:
                 # Receive message
                 data = await websocket.receive_json()
                 message = data.get("message", "")
+                use_rag = data.get("use_rag", False)
 
                 if not message:
                     continue
+
+                # Enable/disable RAG based on request
+                if use_rag:
+                    try:
+                        agent.enable_rag()
+                    except Exception:
+                        pass  # RAG dependencies not installed
+                else:
+                    agent.disable_rag()
 
                 # Stream response
                 try:
@@ -234,6 +244,58 @@ def create_app(config_path: Optional[Path] = None) -> FastAPI:
             raise HTTPException(
                 status_code=501,
                 detail="RAG dependencies not installed",
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/api/rag/upload")
+    async def rag_upload_pdf(file: UploadFile = File(...)) -> dict[str, Any]:
+        """
+        Upload and index a PDF document.
+
+        Args:
+            file: Uploaded PDF file
+
+        Returns:
+            Indexing result
+        """
+        try:
+            from local_prompt_agent.rag import RAGSystem
+            import tempfile
+            import shutil
+
+            # Validate file type
+            if not file.filename.endswith('.pdf'):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Only PDF files are supported"
+                )
+
+            # Save uploaded file to temp location
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+                shutil.copyfileobj(file.file, tmp)
+                tmp_path = Path(tmp.name)
+
+            # Index the document
+            rag_system = RAGSystem()
+            result = rag_system.index_document(tmp_path)
+
+            # Clean up temp file
+            tmp_path.unlink()
+
+            return {
+                "success": True,
+                "message": "Document indexed successfully",
+                "file_name": file.filename,
+                "num_chunks": result["num_chunks"],
+                "page_count": result["page_count"],
+            }
+
+        except ImportError:
+            raise HTTPException(
+                status_code=501,
+                detail="RAG dependencies not installed. "
+                "Install: pip install pdfplumber sentence-transformers chromadb"
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
