@@ -282,14 +282,28 @@ async function handlePDFUpload(event) {
     docsList.prepend(progressDiv);
     
     try {
-        // Upload file
+        // Upload file with timeout
         const formData = new FormData();
         formData.append('file', file);
         
+        // Add timeout (2 minutes for large PDFs)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000);
+        
+        progressDiv.textContent = `📄 Uploading ${file.name}... (this may take 1-2 minutes)`;
+        
         const response = await fetch('/api/rag/upload', {
             method: 'POST',
-            body: formData
+            body: formData,
+            signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Upload failed');
+        }
         
         const result = await response.json();
         
@@ -301,21 +315,30 @@ async function handlePDFUpload(event) {
             setTimeout(() => {
                 progressDiv.remove();
                 loadIndexedDocuments();
-            }, 2000);
+            }, 3000);
             
-            // Enable RAG mode
+            // Enable RAG mode automatically
             ragToggle.checked = true;
             ragEnabled = true;
+            
+            console.log('PDF indexed successfully:', result);
         } else {
-            progressDiv.textContent = `✗ Error: ${result.message}`;
+            progressDiv.textContent = `✗ Error: ${result.message || 'Unknown error'}`;
             progressDiv.style.background = '#ff3d00';
-            setTimeout(() => progressDiv.remove(), 3000);
+            setTimeout(() => progressDiv.remove(), 5000);
         }
         
     } catch (error) {
-        progressDiv.textContent = `✗ Upload failed: ${error.message}`;
+        console.error('Upload error:', error);
+        
+        if (error.name === 'AbortError') {
+            progressDiv.textContent = `✗ Upload timeout (file too large or slow processing)`;
+        } else {
+            progressDiv.textContent = `✗ Upload failed: ${error.message}`;
+        }
+        
         progressDiv.style.background = '#ff3d00';
-        setTimeout(() => progressDiv.remove(), 3000);
+        setTimeout(() => progressDiv.remove(), 5000);
     }
     
     // Reset file input

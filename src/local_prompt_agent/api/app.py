@@ -263,6 +263,8 @@ def create_app(config_path: Optional[Path] = None) -> FastAPI:
             from local_prompt_agent.rag import RAGSystem
             import tempfile
             import shutil
+            import asyncio
+            from concurrent.futures import ThreadPoolExecutor
 
             # Validate file type
             if not file.filename.endswith('.pdf'):
@@ -276,12 +278,21 @@ def create_app(config_path: Optional[Path] = None) -> FastAPI:
                 shutil.copyfileobj(file.file, tmp)
                 tmp_path = Path(tmp.name)
 
-            # Index the document
-            rag_system = RAGSystem()
-            result = rag_system.index_document(tmp_path)
+            # Run indexing in thread pool to avoid blocking
+            def index_in_thread():
+                rag_system = RAGSystem()
+                return rag_system.index_document(tmp_path)
+
+            # Execute in thread pool
+            loop = asyncio.get_event_loop()
+            with ThreadPoolExecutor() as executor:
+                result = await loop.run_in_executor(executor, index_in_thread)
 
             # Clean up temp file
-            tmp_path.unlink()
+            try:
+                tmp_path.unlink()
+            except:
+                pass
 
             return {
                 "success": True,
@@ -298,6 +309,8 @@ def create_app(config_path: Optional[Path] = None) -> FastAPI:
                 "Install: pip install pdfplumber sentence-transformers chromadb"
             )
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             raise HTTPException(status_code=500, detail=str(e))
 
     return app

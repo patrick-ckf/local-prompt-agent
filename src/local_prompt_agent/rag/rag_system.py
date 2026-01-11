@@ -104,9 +104,19 @@ class RAGSystem:
         print(f"   ✓ Created {len(chunks)} chunks")
 
         # Step 3: Generate embeddings
-        print(f"   ⏳ Generating embeddings...")
-        embeddings = self.embedding_model.encode(chunks, show_progress_bar=False)
-        print(f"   ✓ Generated embeddings")
+        print(f"   ⏳ Generating embeddings for {len(chunks)} chunks...")
+        try:
+            # Generate embeddings in smaller batches to avoid blocking
+            embeddings = self.embedding_model.encode(
+                chunks, 
+                show_progress_bar=True,
+                batch_size=8,  # Smaller batches for stability
+                convert_to_numpy=True
+            )
+            print(f"   ✓ Generated {len(embeddings)} embeddings")
+        except Exception as e:
+            print(f"   ✗ Error generating embeddings: {e}")
+            raise
 
         # Step 4: Store in vector database
         ids = [f"{file_path.stem}_{i}" for i in range(len(chunks))]
