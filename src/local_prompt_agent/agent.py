@@ -11,6 +11,11 @@ from local_prompt_agent.backends.base import Backend, Message
 from local_prompt_agent.backends.ollama import OllamaBackend
 from local_prompt_agent.config import Config
 
+try:
+    from local_prompt_agent.rag import RAGSystem
+except ImportError:
+    RAGSystem = None
+
 
 class Agent:
     """
@@ -38,6 +43,8 @@ class Agent:
         self.backend = self._initialize_backend()
         self.conversation_history: List[Message] = []
         self.system_prompt: Optional[str] = None
+        self.rag_system: Optional[Any] = None
+        self.use_rag: bool = False
 
     def _initialize_backend(self) -> Backend:
         """
@@ -70,6 +77,26 @@ class Agent:
         """Clear conversation history."""
         self.conversation_history = []
 
+    def enable_rag(self, collection_name: str = "documents") -> None:
+        """
+        Enable RAG mode for document-based Q&A.
+
+        Args:
+            collection_name: Name of the document collection
+        """
+        if RAGSystem is None:
+            raise ImportError(
+                "RAG dependencies not installed. "
+                "Install with: pip install pdfplumber sentence-transformers chromadb"
+            )
+
+        self.rag_system = RAGSystem(collection_name=collection_name)
+        self.use_rag = True
+
+    def disable_rag(self) -> None:
+        """Disable RAG mode."""
+        self.use_rag = False
+
     async def execute(
         self,
         message: str,
@@ -101,16 +128,46 @@ class Agent:
         if use_history:
             messages.extend(self.conversation_history)
 
+        # If RAG enabled, retrieve relevant context
+        actual_message = message
+        if self.use_rag and self.rag_system:
+            rag_result = self.rag_system.query(message, k=5)
+            if rag_result["has_results"]:
+                # Augment message with retrieved context
+                context = rag_result["context"]
+                sources = ", ".join([s["file"] for s in rag_result["sources"]])
+                actual_message = f"""Answer the question based on the following context.
+
+Context from documents:
+{context}
+
+Question: {message}
+
+Answer:"""
+                # Add source info to response later
+                self._last_rag_sources = rag_result["sources"]
+            else:
+                self._last_rag_sources = None
+        else:
+            self._last_rag_sources = None
+
         # Add current message
-        user_msg = Message("user", message)
+        user_msg = Message("user", actual_message)
         messages.append(user_msg)
 
         # Get response from backend
         response_text = await self.backend.complete(messages)
 
-        # Save to history
+        # Add sources if RAG was used
+        if self._last_rag_sources:
+            sources_text = "\n\nSources:\n" + "\n".join(
+                [f"- {s['file']}" for s in self._last_rag_sources]
+            )
+            response_text += sources_text
+
+        # Save to history (save original user message, not augmented)
         if use_history:
-            self.conversation_history.append(user_msg)
+            self.conversation_history.append(Message("user", message))
             self.conversation_history.append(Message("assistant", response_text))
 
         return response_text

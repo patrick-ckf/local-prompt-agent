@@ -44,21 +44,25 @@ def main(ctx: click.Context, config: Optional[Path]) -> None:
 @main.command()
 @click.option("--model", help="Override model from config")
 @click.option("--stream/--no-stream", default=True, help="Stream responses")
+@click.option("--rag/--no-rag", default=False, help="Enable RAG mode for documents")
 @click.pass_context
-def chat(ctx: click.Context, model: Optional[str], stream: bool) -> None:
+def chat(
+    ctx: click.Context, model: Optional[str], stream: bool, rag: bool
+) -> None:
     """
     Start interactive chat session.
 
     開始互動式對話 / 开始交互式对话
     """
     config_path = ctx.obj.get("config_path")
-    asyncio.run(_chat(config_path, model, stream))
+    asyncio.run(_chat(config_path, model, stream, rag))
 
 
 async def _chat(
     config_path: Optional[Path],
     model: Optional[str],
     stream: bool,
+    rag: bool = False,
 ) -> None:
     """Async chat implementation."""
     # Load config
@@ -75,12 +79,28 @@ async def _chat(
         console.print(f"[red]Error initializing agent: {e}[/red]")
         return
 
+    # Enable RAG if requested
+    if rag:
+        try:
+            agent.enable_rag()
+            console.print("[green]✓ RAG mode enabled[/green]")
+        except ImportError as e:
+            console.print(
+                f"[red]RAG dependencies not installed.[/red]\n"
+                "[yellow]Install with:[/yellow] pip install pdfplumber sentence-transformers chromadb"
+            )
+            return
+        except Exception as e:
+            console.print(f"[yellow]Warning: Could not enable RAG: {e}[/yellow]")
+
     # Welcome message
+    rag_status = "[green]✓ RAG Enabled[/green]" if rag else ""
     console.print(
         Panel.fit(
             "[bold blue]Local Prompt Agent[/bold blue]\n"
             f"Model: {config.backend.model}\n"
-            f"Backend: {config.backend.type}\n\n"
+            f"Backend: {config.backend.type}\n"
+            f"{rag_status}\n\n"
             "[dim]Type '/exit' to quit, '/clear' to clear history[/dim]",
             title="Welcome 歡迎 欢迎",
         )
@@ -223,6 +243,108 @@ def serve(ctx: click.Context, host: str, port: int, reload: bool) -> None:
         reload=reload,
         log_level="info",
     )
+
+
+@main.group()
+def rag() -> None:
+    """
+    RAG commands for document processing.
+
+    文檔處理命令 / 文档处理命令
+    """
+    pass
+
+
+@rag.command("index")
+@click.argument("file_path", type=click.Path(exists=True, path_type=Path))
+def rag_index(file_path: Path) -> None:
+    """Index a PDF document for RAG."""
+    try:
+        from local_prompt_agent.rag import RAGSystem
+
+        rag_system = RAGSystem()
+        result = rag_system.index_document(file_path)
+
+        console.print(
+            Panel(
+                f"[bold green]✓ Document indexed successfully[/bold green]\n\n"
+                f"File: {result['file_name']}\n"
+                f"Pages: {result['page_count']}\n"
+                f"Chunks: {result['num_chunks']}",
+                title="Indexing Complete",
+            )
+        )
+    except ImportError as e:
+        console.print(
+            f"[red]Error: {e}[/red]\n"
+            "[yellow]Install RAG dependencies:[/yellow]\n"
+            "  pip install pdfplumber sentence-transformers chromadb"
+        )
+    except Exception as e:
+        console.print(f"[red]Error indexing document: {e}[/red]")
+
+
+@rag.command("query")
+@click.argument("question")
+@click.option("-k", "--top-k", default=5, help="Number of chunks to retrieve")
+def rag_query(question: str, top_k: int) -> None:
+    """Query indexed documents."""
+    try:
+        from local_prompt_agent.rag import RAGSystem
+
+        rag_system = RAGSystem()
+        result = rag_system.query(question, k=top_k)
+
+        if not result["has_results"]:
+            console.print(
+                "[yellow]No documents indexed yet.[/yellow]\n"
+                "Index a document first:\n"
+                "  lpa rag index your_document.pdf"
+            )
+            return
+
+        console.print(Panel.fit(f"[bold]Question:[/bold] {question}", title="Query"))
+
+        console.print("\n[bold]Retrieved Context:[/bold]\n")
+        console.print(result["context"])
+
+        console.print("\n[bold]Sources:[/bold]")
+        for source in result["sources"]:
+            console.print(f"  • {source['file']} ({source['chunks']} chunks)")
+
+    except ImportError as e:
+        console.print(f"[red]Error: {e}[/red]")
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+
+
+@rag.command("list")
+def rag_list() -> None:
+    """List all indexed documents."""
+    try:
+        from local_prompt_agent.rag import RAGSystem
+
+        rag_system = RAGSystem()
+        docs = rag_system.list_documents()
+
+        if not docs:
+            console.print("[yellow]No documents indexed yet.[/yellow]")
+            return
+
+        console.print(Panel.fit("[bold]Indexed Documents[/bold]", title="RAG"))
+
+        for doc in docs:
+            console.print(
+                f"\n[bold]{doc['file_name']}[/bold]\n"
+                f"  Path: {doc['file_path']}\n"
+                f"  Pages: {doc['pages']}\n"
+                f"  Chunks: {doc['chunks']}"
+            )
+
+    except ImportError as e:
+        console.print(f"[red]Error: {e}[/red]")
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
 
 
 @main.command()

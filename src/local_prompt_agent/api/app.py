@@ -174,6 +174,70 @@ def create_app(config_path: Optional[Path] = None) -> FastAPI:
             },
         }
 
+    @app.post("/api/rag/query")
+    async def rag_query(question: str, k: int = 5) -> dict[str, Any]:
+        """
+        Query RAG system.
+
+        Args:
+            question: User's question
+            k: Number of chunks to retrieve
+        """
+        try:
+            from local_prompt_agent.rag import RAGSystem
+
+            rag_system = RAGSystem()
+            result = rag_system.query(question, k=k)
+
+            if not result["has_results"]:
+                return {
+                    "success": False,
+                    "message": "No documents indexed yet",
+                }
+
+            # Generate answer with RAG context
+            agent.enable_rag()
+            answer = await agent.execute(question, use_history=False)
+
+            return {
+                "success": True,
+                "question": question,
+                "answer": answer,
+                "sources": result["sources"],
+                "num_chunks": result["num_results"],
+            }
+
+        except ImportError:
+            raise HTTPException(
+                status_code=501,
+                detail="RAG dependencies not installed",
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/rag/documents")
+    async def rag_list_documents() -> dict[str, Any]:
+        """List all indexed documents."""
+        try:
+            from local_prompt_agent.rag import RAGSystem
+
+            rag_system = RAGSystem()
+            docs = rag_system.list_documents()
+
+            return {
+                "success": True,
+                "documents": docs,
+                "count": len(docs),
+            }
+
+        except ImportError:
+            raise HTTPException(
+                status_code=501,
+                detail="RAG dependencies not installed",
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
     return app
 
 

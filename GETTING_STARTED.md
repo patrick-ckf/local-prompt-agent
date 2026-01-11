@@ -21,6 +21,14 @@
 - ✅ Mobile responsive design
 - ✅ Multi-language UI support
 
+### Phase 3 (Complete) ✅
+- ✅ **PDF Document Processing** (pdfplumber)
+- ✅ **RAG System** (Retrieval-Augmented Generation)
+- ✅ **Semantic Search** (ChromaDB + embeddings)
+- ✅ **Question Answering** with citations
+- ✅ CLI commands (`rag index`, `rag query`, `rag list`)
+- ✅ Multi-document support
+
 ## 📋 Prerequisites
 
 ### 1. Python 3.11 or Higher
@@ -131,6 +139,28 @@ local-prompt-agent chat
 # Or use short command
 lpa chat
 ```
+
+### 4. Option C: RAG - Ask Questions About PDFs 📄
+
+```bash
+# Install RAG dependencies first
+pip install pdfplumber sentence-transformers chromadb
+
+# Index your PDF documents
+lpa rag index research_paper.pdf
+lpa rag index contract.pdf
+
+# List indexed documents
+lpa rag list
+
+# Ask questions about your documents
+lpa rag query "What are the key findings?"
+
+# Or chat with RAG mode
+lpa chat --rag
+```
+
+**See [RAG_QUICKSTART.md](docs/RAG_QUICKSTART.md) for complete guide!**
 
 **Commands in chat**:
 - Type your message and press Enter
