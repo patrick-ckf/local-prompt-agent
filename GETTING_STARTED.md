@@ -29,6 +29,13 @@
 - ✅ CLI commands (`rag index`, `rag query`, `rag list`)
 - ✅ Multi-document support
 
+### Phase 4 (Complete) ✅
+- ✅ **OpenAI Backend** (GPT-4, GPT-3.5-turbo)
+- ✅ **Anthropic Backend** (Claude 3 Opus/Sonnet/Haiku)
+- ✅ **Tool System** (function calling)
+- ✅ **Built-in Tools** (calculator, file_read)
+- ✅ **Multi-Backend Switching** (Ollama/OpenAI/Claude)
+
 ## 📋 Prerequisites
 
 ### 1. Python 3.11 or Higher
@@ -161,6 +168,45 @@ lpa chat --rag
 ```
 
 **See [RAG_QUICKSTART.md](docs/RAG_QUICKSTART.md) for complete guide!**
+
+### 5. Use Cloud LLMs (OpenAI/Claude) 🚀
+
+```bash
+# Set API key
+export OPENAI_API_KEY="sk-proj-..."
+# OR
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# Edit config/config.yaml:
+# backend:
+#   type: "openai"     # or "anthropic"
+#   model: "gpt-4"     # or "claude-3-opus-20240229"
+
+# Chat with cloud LLMs
+lpa chat
+```
+
+**See [BACKENDS_GUIDE.md](docs/BACKENDS_GUIDE.md) for complete guide!**
+
+### 6. Use Tools (Calculator, File Ops) 🛠️
+
+Tools allow the agent to perform actions:
+
+```python
+from local_prompt_agent.tools.builtin import CalculatorTool, FileReadTool
+
+# Calculator
+calc = CalculatorTool()
+result = await calc.execute(expression="25 * 4 + 10")
+# Result: 110
+
+# File read
+file_tool = FileReadTool()
+result = await file_tool.execute(file_path="README.md")
+# Returns file contents
+```
+
+**See [TOOLS_GUIDE.md](docs/TOOLS_GUIDE.md) for complete guide!**
 
 **Commands in chat**:
 - Type your message and press Enter

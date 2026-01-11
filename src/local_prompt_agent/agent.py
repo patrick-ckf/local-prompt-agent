@@ -12,6 +12,16 @@ from local_prompt_agent.backends.ollama import OllamaBackend
 from local_prompt_agent.config import Config
 
 try:
+    from local_prompt_agent.backends.openai import OpenAIBackend
+except ImportError:
+    OpenAIBackend = None
+
+try:
+    from local_prompt_agent.backends.anthropic import AnthropicBackend
+except ImportError:
+    AnthropicBackend = None
+
+try:
     from local_prompt_agent.rag import RAGSystem
 except ImportError:
     RAGSystem = None
@@ -61,8 +71,21 @@ class Agent:
 
         if backend_type == "ollama":
             return OllamaBackend(backend_config)
+        elif backend_type == "openai":
+            if OpenAIBackend is None:
+                raise ImportError("openai package required. Already installed!")
+            return OpenAIBackend(backend_config)
+        elif backend_type == "anthropic":
+            if AnthropicBackend is None:
+                raise ImportError(
+                    "anthropic package required. Install: pip install anthropic"
+                )
+            return AnthropicBackend(backend_config)
         else:
-            raise ValueError(f"Unsupported backend type: {backend_type}")
+            raise ValueError(
+                f"Unsupported backend: {backend_type}. "
+                f"Supported: ollama, openai, anthropic"
+            )
 
     def set_system_prompt(self, prompt: str) -> None:
         """
