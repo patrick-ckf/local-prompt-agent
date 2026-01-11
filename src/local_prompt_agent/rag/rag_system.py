@@ -35,7 +35,7 @@ class RAGSystem:
         self,
         collection_name: str = "documents",
         persist_directory: str = "data/vector_store",
-        embedding_model: str = "all-MiniLM-L6-v2",
+        embedding_model: str = "paraphrase-MiniLM-L3-v2",  # Smaller, faster model
     ):
         """
         Initialize RAG system.
@@ -62,7 +62,13 @@ class RAGSystem:
 
         # Initialize components
         self.doc_processor = DocumentProcessor()
-        self.embedding_model = SentenceTransformer(embedding_model)
+        # Use CPU and optimize memory
+        self.embedding_model = SentenceTransformer(
+            embedding_model,
+            device='cpu',  # Use CPU (more stable)
+        )
+        # Set to use less memory
+        self.embedding_model.max_seq_length = 128  # Reduce sequence length
 
         # Initialize ChromaDB
         self.client = chromadb.PersistentClient(path=str(self.persist_directory))
