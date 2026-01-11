@@ -6,7 +6,7 @@ authors = [
     {name = "Patrick Cheung", email = "patrick@example.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 license = {text = "MIT"}
 keywords = ["ai", "llm", "prompt-engineering", "rag", "local-first", "privacy"]
 classifiers = [
