@@ -1,0 +1,21 @@
+# Local Prompt Agent Configuration
+# Save as UTF-8
+
+system:
+  language: "en"  # Interface language: en, zh-TW, zh-CN
+  theme: "light"  # UI theme: light, dark
+  log_level: "INFO"  # Logging: DEBUG, INFO, WARNING, ERROR
+  data_dir: "data"  # Directory for storing data
+
+backend:
+  type: "ollama"  # Backend: ollama, openai, anthropic
+  base_url: "http://localhost:11434"  # Ollama default URL
+  model: "mistral"  # Model name (ollama: mistral, llama2, etc.)
+  api_key: null  # API key for cloud providers (optional)
+  timeout: 60  # Request timeout in seconds
+  max_tokens: 2048  # Maximum tokens to generate
+  temperature: 0.7  # Sampling temperature (0.0-1.0)
+
+database:
+  url: "sqlite+aiosqlite:///data/conversations.db"  # Database URL
+  echo: false  # Echo SQL statements (for debugging)
