@@ -315,6 +315,54 @@ def create_app(config_path: Optional[Path] = None) -> FastAPI:
             traceback.print_exc()
             raise HTTPException(status_code=500, detail=str(e))
 
+    @app.post("/api/rag/generate-prompts")
+    async def rag_generate_prompts(doc_name: str, num_prompts: int = 5) -> dict[str, Any]:
+        """
+        Generate suggested prompts/questions for a document.
+
+        Args:
+            doc_name: Document file name
+            num_prompts: Number of prompts to generate
+
+        Returns:
+            Generated prompts
+        """
+        try:
+            from local_prompt_agent.rag.simple_rag import SimpleRAG
+
+            rag_system = SimpleRAG()
+            
+            # Get document summary
+            summary = rag_system.get_document_summary(doc_name, num_chunks=10)
+            
+            if not summary:
+                return {
+                    "success": False,
+                    "message": f"Document not found: {doc_name}",
+                }
+
+            # Generate prompts using agent
+            prompt = f"""Based on this document excerpt, generate {num_prompts} interesting and specific questions that someone might want to ask about the full document.
+
+Document excerpt:
+{summary[:3000]}
+
+Generate exactly {num_prompts} questions. Format as a numbered list.
+Make questions specific, useful, and diverse (cover different aspects).
+"""
+            
+            response = await agent.execute(prompt, use_history=False)
+            
+            return {
+                "success": True,
+                "doc_name": doc_name,
+                "prompts": response,
+                "num_prompts": num_prompts,
+            }
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
     return app
 
 

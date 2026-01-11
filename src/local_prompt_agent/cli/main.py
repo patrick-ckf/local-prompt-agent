@@ -352,6 +352,65 @@ def rag_list() -> None:
         console.print(f"[red]Error: {e}[/red]")
 
 
+@rag.command("prompts")
+@click.argument("doc_name")
+@click.option("-n", "--num-prompts", default=5, help="Number of prompts to generate")
+@click.pass_context
+def rag_generate_prompts(ctx: click.Context, doc_name: str, num_prompts: int) -> None:
+    """
+    Generate suggested prompts/questions for a document.
+    
+    生成文檔相關的提示問題 / 生成文档相关的提示问题
+    """
+    try:
+        from local_prompt_agent.rag.simple_rag import SimpleRAG
+
+        rag_system = SimpleRAG()
+        
+        # Get document summary
+        summary = rag_system.get_document_summary(doc_name, num_chunks=10)
+        
+        if not summary:
+            console.print(f"[yellow]Document not found: {doc_name}[/yellow]")
+            console.print("\nUse: lpa rag list  (to see available documents)")
+            return
+
+        console.print(f"[bold]Analyzing {doc_name}...[/bold]\n")
+        
+        # Use agent to generate prompts
+        config_path = ctx.obj.get("config_path")
+        config = load_config(config_path)
+        agent = Agent(config)
+        
+        prompt = f"""Based on this document excerpt, generate {num_prompts} interesting and specific questions that someone might want to ask about the full document.
+
+Document excerpt:
+{summary[:3000]}
+
+Generate exactly {num_prompts} questions. Format as a numbered list.
+Make questions specific, useful, and diverse (cover different aspects).
+"""
+        
+        response = asyncio.run(agent.execute(prompt, use_history=False))
+        
+        console.print(
+            Panel(
+                response,
+                title=f"Suggested Questions for {doc_name}",
+                border_style="green"
+            )
+        )
+        
+        console.print(
+            "\n[dim]Use these prompts with:[/dim]\n"
+            f"  lpa rag query \"<question>\"\n"
+            f"  lpa chat --rag"
+        )
+
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+
+
 @main.command()
 def version() -> None:
     """Show version information."""

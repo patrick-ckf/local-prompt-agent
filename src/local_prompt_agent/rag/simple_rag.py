@@ -176,3 +176,21 @@ class SimpleRAG:
         """Clear all indexed documents."""
         self.documents = {}
         self._save_index()
+
+    def get_document_summary(self, doc_name: str, num_chunks: int = 10) -> str:
+        """
+        Get a summary of the document (first N chunks).
+
+        Args:
+            doc_name: Document file name
+            num_chunks: Number of chunks to include
+
+        Returns:
+            Text summary from document
+        """
+        for doc in self.documents.values():
+            if doc["file_name"] == doc_name:
+                chunks = doc["chunks"][:num_chunks]
+                return "\n\n".join(chunks)
+        
+        return ""
