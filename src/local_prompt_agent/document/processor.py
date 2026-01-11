@@ -86,17 +86,24 @@ class DocumentProcessor:
         if not text:
             return []
 
+        print(f"   ⏳ Chunking {len(text)} characters...")
+        
         chunks = []
         start = 0
+        
+        # Estimate number of chunks
+        estimated_chunks = len(text) // (chunk_size - overlap) + 1
+        print(f"   ⏳ Creating ~{estimated_chunks} chunks...")
 
         while start < len(text):
-            end = start + chunk_size
+            end = min(start + chunk_size, len(text))
 
-            # Try to break at sentence boundary
+            # Try to break at sentence boundary (limit search to avoid slow rfind)
             if end < len(text):
-                # Look for sentence endings
-                for delimiter in ["。", ".", "!", "?", "\n"]:
-                    last_pos = text.rfind(delimiter, start, end)
+                # Search only in last 100 chars for efficiency
+                search_start = max(start, end - 100)
+                for delimiter in ["\n\n", "。", ".", "!", "?", "\n"]:
+                    last_pos = text.rfind(delimiter, search_start, end)
                     if last_pos > start:
                         end = last_pos + 1
                         break
@@ -106,6 +113,11 @@ class DocumentProcessor:
                 chunks.append(chunk)
 
             # Move start with overlap
-            start = end - overlap if end < len(text) else end
+            start = end - overlap if end < len(text) else len(text)
+            
+            # Avoid infinite loop
+            if start >= len(text):
+                break
 
+        print(f"   ✓ Created {len(chunks)} chunks")
         return chunks
