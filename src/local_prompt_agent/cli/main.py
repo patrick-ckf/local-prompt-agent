@@ -184,6 +184,48 @@ def config(ctx: click.Context) -> None:
 
 
 @main.command()
+@click.option("--host", default="127.0.0.1", help="Host to bind to")
+@click.option("--port", default=8000, help="Port to bind to")
+@click.option("--reload", is_flag=True, help="Enable auto-reload")
+@click.pass_context
+def serve(ctx: click.Context, host: str, port: int, reload: bool) -> None:
+    """
+    Start REST API server with Web UI.
+
+    啟動 REST API 伺服器 / 启动 REST API 服务器
+    """
+    import uvicorn
+
+    from local_prompt_agent.api import create_app
+
+    console.print(
+        Panel.fit(
+            f"[bold blue]Starting Local Prompt Agent API[/bold blue]\n\n"
+            f"API:    http://{host}:{port}\n"
+            f"Web UI: http://{host}:{port}\n"
+            f"Docs:   http://{host}:{port}/docs\n\n"
+            "[dim]Press Ctrl+C to stop[/dim]",
+            title="Server",
+        )
+    )
+
+    # Get config path
+    config_path = ctx.obj.get("config_path")
+
+    # Create app
+    app = create_app(config_path)
+
+    # Run server
+    uvicorn.run(
+        app,
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="info",
+    )
+
+
+@main.command()
 def version() -> None:
     """Show version information."""
     console.print(

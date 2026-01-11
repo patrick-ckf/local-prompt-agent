@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Prompt Agent</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <button class="menu-button" id="menuButton" aria-label="Menu">☰</button>
+            <h1 class="logo">Local Prompt Agent</h1>
+        </div>
+        <div class="header-right">
+            <select class="language-selector" id="languageSelector" aria-label="Language">
+                <option value="en">English</option>
+                <option value="zh-TW">繁體中文</option>
+                <option value="zh-CN">简体中文</option>
+            </select>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌓</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <button class="new-chat-button" id="newChatButton">
+                <span>➕</span>
+                <span>New Chat</span>
+            </button>
+            
+            <nav class="chat-history" id="chatHistory">
+                <!-- Chat history will be populated here -->
+            </nav>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+            <!-- Model Selector -->
+            <div class="selector-bar">
+                <div class="model-info" id="modelInfo">
+                    <span>Model: mistral</span>
+                    <span class="status-dot"></span>
+                </div>
+            </div>
+
+            <!-- Messages Container -->
+            <div class="messages" id="messages">
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon">🤖</div>
+                    <h2>Hello! How can I help you today?</h2>
+                    <p>你好！我能為你做什麼？</p>
+                    
+                    <div class="suggested-prompts">
+                        <button class="prompt-card" onclick="sendSuggested('Explain how RAG works')">
+                            <span class="prompt-icon">💡</span>
+                            <span class="prompt-text">Explain how RAG works</span>
+                        </button>
+                        <button class="prompt-card" onclick="sendSuggested('Write Python code for fibonacci')">
+                            <span class="prompt-icon">💻</span>
+                            <span class="prompt-text">Write Python code</span>
+                        </button>
+                        <button class="prompt-card" onclick="sendSuggested('用繁體中文解釋什麼是AI')">
+                            <span class="prompt-icon">🌐</span>
+                            <span class="prompt-text">用繁體中文解釋AI</span>
+                        </button>
+                        <button class="prompt-card" onclick="sendSuggested('Help me understand machine learning')">
+                            <span class="prompt-icon">📚</span>
+                            <span class="prompt-text">Explain ML concepts</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-container">
+                    <textarea 
+                        class="message-input" 
+                        id="messageInput"
+                        placeholder="Type your message... (Shift+Enter for new line)"
+                        rows="1"
+                    ></textarea>
+                    <button class="send-button" id="sendButton" aria-label="Send message">
+                        <span class="send-icon">➤</span>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="input-hint">Press Enter to send</span>
+                    <span class="character-count" id="charCount">0 / 4000</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Overlay for mobile -->
+    <div class="overlay" id="overlay"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

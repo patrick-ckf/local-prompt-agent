@@ -2,8 +2,9 @@
 
 🎉 **Phase 1 Implementation is Complete!** You can now run a basic local AI assistant.
 
-## ✅ What's Implemented (Phase 1)
+## ✅ What's Implemented
 
+### Phase 1 (Complete) ✅
 - ✅ Core Agent class
 - ✅ Ollama backend (local LLMs)
 - ✅ Configuration system (YAML + Pydantic)
@@ -11,6 +12,14 @@
 - ✅ Streaming responses
 - ✅ Conversation history
 - ✅ Basic tests
+
+### Phase 2 (Complete) ✅
+- ✅ REST API with FastAPI
+- ✅ **Modern Web UI** (ChatGPT-style interface)
+- ✅ WebSocket streaming
+- ✅ Light/Dark mode
+- ✅ Mobile responsive design
+- ✅ Multi-language UI support
 
 ## 📋 Prerequisites
 
@@ -92,10 +101,31 @@ ollama serve
 
 Leave this running in a terminal.
 
-### 2. Interactive Chat
+### 2. Option A: Web UI (Recommended) 🌐
 
 ```bash
-# Start chat
+# Start the API server with Web UI
+lpa serve
+
+# Or custom port
+lpa serve --port 8080
+```
+
+Then open your browser to: **http://localhost:8000**
+
+**Features**:
+- ✨ Modern ChatGPT-style interface
+- ⚡ Real-time streaming responses
+- 🌓 Light/Dark mode toggle
+- 📱 Mobile responsive
+- 🌐 Multi-language (EN, 繁體中文, 简体中文)
+- 🎯 Suggested prompts
+- 💬 Beautiful message bubbles
+
+### 3. Option B: Interactive CLI
+
+```bash
+# Start chat in terminal
 local-prompt-agent chat
 
 # Or use short command
