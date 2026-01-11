@@ -257,12 +257,17 @@ def rag() -> None:
 
 @rag.command("index")
 @click.argument("file_path", type=click.Path(exists=True, path_type=Path))
-def rag_index(file_path: Path) -> None:
+@click.option("--simple/--full", default=True, help="Use simple (fast) or full (slow) RAG")
+def rag_index(file_path: Path, simple: bool) -> None:
     """Index a PDF document for RAG."""
     try:
-        from local_prompt_agent.rag import RAGSystem
-
-        rag_system = RAGSystem()
+        if simple:
+            from local_prompt_agent.rag.simple_rag import SimpleRAG
+            rag_system = SimpleRAG()
+        else:
+            from local_prompt_agent.rag import RAGSystem
+            rag_system = RAGSystem()
+        
         result = rag_system.index_document(file_path)
 
         console.print(
@@ -290,9 +295,9 @@ def rag_index(file_path: Path) -> None:
 def rag_query(question: str, top_k: int) -> None:
     """Query indexed documents."""
     try:
-        from local_prompt_agent.rag import RAGSystem
+        from local_prompt_agent.rag.simple_rag import SimpleRAG
 
-        rag_system = RAGSystem()
+        rag_system = SimpleRAG()
         result = rag_system.query(question, k=top_k)
 
         if not result["has_results"]:
@@ -322,9 +327,9 @@ def rag_query(question: str, top_k: int) -> None:
 def rag_list() -> None:
     """List all indexed documents."""
     try:
-        from local_prompt_agent.rag import RAGSystem
+        from local_prompt_agent.rag.simple_rag import SimpleRAG
 
-        rag_system = RAGSystem()
+        rag_system = SimpleRAG()
         docs = rag_system.list_documents()
 
         if not docs:

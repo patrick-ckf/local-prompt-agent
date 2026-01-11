@@ -22,6 +22,11 @@ except ImportError:
     AnthropicBackend = None
 
 try:
+    from local_prompt_agent.rag.simple_rag import SimpleRAG
+except ImportError:
+    SimpleRAG = None
+
+try:
     from local_prompt_agent.rag import RAGSystem
 except ImportError:
     RAGSystem = None
@@ -100,20 +105,28 @@ class Agent:
         """Clear conversation history."""
         self.conversation_history = []
 
-    def enable_rag(self, collection_name: str = "documents") -> None:
+    def enable_rag(self, collection_name: str = "documents", use_simple: bool = True) -> None:
         """
         Enable RAG mode for document-based Q&A.
 
         Args:
             collection_name: Name of the document collection
+            use_simple: Use SimpleRAG (fast, no ML) vs full RAG (slow, better quality)
         """
-        if RAGSystem is None:
-            raise ImportError(
-                "RAG dependencies not installed. "
-                "Install with: pip install pdfplumber sentence-transformers chromadb"
-            )
-
-        self.rag_system = RAGSystem(collection_name=collection_name)
+        if use_simple:
+            # Use simple keyword-based RAG (fast, no dependencies!)
+            if SimpleRAG is None:
+                raise ImportError("SimpleRAG not available")
+            self.rag_system = SimpleRAG()
+        else:
+            # Use full embedding-based RAG (slow but better)
+            if RAGSystem is None:
+                raise ImportError(
+                    "Full RAG dependencies not installed. "
+                    "Install with: pip install sentence-transformers chromadb"
+                )
+            self.rag_system = RAGSystem(collection_name=collection_name)
+        
         self.use_rag = True
 
     def disable_rag(self) -> None:

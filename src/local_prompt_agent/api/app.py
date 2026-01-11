@@ -194,9 +194,9 @@ def create_app(config_path: Optional[Path] = None) -> FastAPI:
             k: Number of chunks to retrieve
         """
         try:
-            from local_prompt_agent.rag import RAGSystem
+            from local_prompt_agent.rag.simple_rag import SimpleRAG
 
-            rag_system = RAGSystem()
+            rag_system = SimpleRAG()
             result = rag_system.query(question, k=k)
 
             if not result["has_results"]:
@@ -229,9 +229,9 @@ def create_app(config_path: Optional[Path] = None) -> FastAPI:
     async def rag_list_documents() -> dict[str, Any]:
         """List all indexed documents."""
         try:
-            from local_prompt_agent.rag import RAGSystem
+            from local_prompt_agent.rag.simple_rag import SimpleRAG
 
-            rag_system = RAGSystem()
+            rag_system = SimpleRAG()
             docs = rag_system.list_documents()
 
             return {
@@ -280,7 +280,9 @@ def create_app(config_path: Optional[Path] = None) -> FastAPI:
 
             # Run indexing in thread pool to avoid blocking
             def index_in_thread():
-                rag_system = RAGSystem()
+                # Use SimpleRAG (fast, no heavy models!)
+                from local_prompt_agent.rag.simple_rag import SimpleRAG
+                rag_system = SimpleRAG()
                 return rag_system.index_document(tmp_path)
 
             # Execute in thread pool
